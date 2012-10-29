@@ -1,0 +1,14 @@
+{
+  "name": "magento-heritage-scripts",
+  "description": "Collection of magento-heritage-scripts",
+  "version": "0.0.1",
+  "author": "Pascal Garber <pascal.garber@gmail.com>",
+  "dependencies": {
+    "magento": "git://github.com/JumpLink/node-magento.git",
+    "heritage": "git://github.com/JumpLink/node-heritage.git",
+    "json-fs": "git://github.com/JumpLink/node-json-fs.git",
+    "fetch": "*",
+    "xmlrpc": "*"
+  },
+  "repository": "git://github.com/JumpLink/magento-heritage-scripts.git"
+}
