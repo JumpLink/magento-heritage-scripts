@@ -8,7 +8,8 @@
     "heritage": "git://github.com/JumpLink/node-heritage.git",
     "json-fs": "git://github.com/JumpLink/node-json-fs.git",
     "fetch": "*",
-    "xmlrpc": "*"
+    "xmlrpc": "*",
+    "csv": "*"
   },
   "repository": "git://github.com/JumpLink/magento-heritage-scripts.git"
 }
