@@ -1,12 +1,12 @@
 lib-cov
 *.seed
 *.log
-*.csv
 *.dat
 *.out
 *.pid
 *.gz
 *.sublime*
+*.json
 
 pids
 logs
@@ -14,5 +14,6 @@ results
 config
 
 npm-debug.log
-fetch
-xmlrpc
+fetch/
+xmlrpc/
+csv/
