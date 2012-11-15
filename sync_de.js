@@ -38,7 +38,7 @@ translations.load(cb_for_vehicles, cb_quality);
 function get_one_from_heritage_and_translate(data, number, cb) {
   heritage.auto.catalog.product.info(data, function(data) {
     if(data.sku) { // WICHTIG nur wenn sku vorhanden ist, beim debuggen evtl auskommentieren!
-      console.log(data);
+      //console.log(data);
       if(data.applications && data.applications.length > 0) {
         data.applications_de = [];
 
@@ -87,21 +87,21 @@ function transform_heritage_to_magento (data) {
   var tier_price = [
     {
         customer_group_id: 4 // 4 = Rabattstufe 1
-      , website: "all"//config.mageplus.website
+      , website: "all"
       , qty: 1 // Menge
       , price: data.PRICE2 * EURO * MWST // (double)
     },
     {
         customer_group_id: 5 // 5 = Rabattstufe 2
       , website: "all"
-      , qty: 1 // Menge
-      , price: data.PRICE3 * EURO * MWST // (double)
+      , qty: 1
+      , price: data.PRICE3 * EURO * MWST
     },
     {
         customer_group_id: 6 // 6 = Rabattstufe 3
       , website: "all"
-      , qty: 1 // Menge
-      , price: data.PRICE4 * EURO * MWST // (double)
+      , qty: 1
+      , price: data.PRICE4 * EURO * MWST
     }
   ];
 
@@ -120,6 +120,7 @@ function transform_heritage_to_magento (data) {
     , visibility:  "4" //Katalog, Suche
     , price: data.RETAILPRICE * MWST * EURO
     , recommend_price: data.RETAILPRICE * MWST * EURO
+    , recommend_price_netto: data.RETAILPRICE * EURO
     , cost_price: data.COSTPRICE * MWST * EURO
     //, special_price: 
     , tax_class_id: 5 // 5 = Umsatzsteuerpfichtige Güter 19%
@@ -130,13 +131,22 @@ function transform_heritage_to_magento (data) {
   if(data.quality_de)
     data_new.quality = data.quality_de;
   
-  /*short description*/ 
+  /* short description */ 
   {
     var short_description = "";
+    // applications in die short description integrieren
     if(data.applications_de) {
       short_description += "<b>Passend f&uuml;r:</b><br><ul>";
       for (var i = data.applications_de.length - 1; i >= 0; i--) {
         short_description += "<li>"+data.applications_de[i]+"</li>";
+      };
+      short_description += "</ul>";
+    }
+    // metrics in die short description integrieren
+    if(data.metrics) {
+      short_description += "<b>Ma&szlig;e:</b><br><ul>";
+      for (var i = data.metrics.length - 1; i >= 0; i--) {
+        short_description += "<li>"+data.metrics[i]+"</li>";
       };
       short_description += "</ul>";
     }
@@ -156,7 +166,6 @@ function transform_heritage_to_magento (data) {
 
   return data_new;
 }
-
 
 function create_one(type, set, data, number, cb) {
   var sku = data.sku;
@@ -179,6 +188,7 @@ function create_all(data, cb) {
   magento.manual.init(function(err) {
     for (var i = data.length - 1; i >= 0; i--) {
       create_one (type, set, data[i], i, function(error, result, sku, number){
+        //console.log("\n"+number+"\n");
         if(number==0)
           cb();
       });
