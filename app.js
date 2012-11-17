@@ -71,16 +71,19 @@ function get_one_from_heritage_and_translate(data, number, cb) {
 
 function get_all_from_and_do(do_it, cb) {
   heritage.auto.catalog.product.list(function(data) {
-    for (var i = data.CODE.length - 1; i >= 0; i--) {
-      do_it(data.CODE[i], i, cb);
-    }
+    json_fs.save(__dirname+"/heritage_data_list.json", data, function () {
+      for (var i = data.CODE.length - 1; i >= 0; i--) {
+        do_it(data.CODE[i], i, cb);
+      }
+    });
   });
 }
 
 /*
- * language can be "de" or "en"
+ * language can be "de" or "en" (string)
+ * set category_ids if you want to move the product to new category_ids (array of strings) 
  */
-function transform_heritage_to_magento (language, data) {
+function transform_heritage_to_magento (language, data, category_ids) {
   var tier_price = [
     {
         customer_group_id: 4 // 4 = Rabattstufe 1
@@ -105,7 +108,6 @@ function transform_heritage_to_magento (language, data) {
   var url_key = data.itemname.replace(/\s/g, "-").replace(/,/g, "");
 
   var data_new = {
-      category_ids: [config.mageplus.root_id.toString()]
     , sku: data.sku
     , websites: [ config.mageplus.website]
     , name: data.itemname
@@ -124,8 +126,25 @@ function transform_heritage_to_magento (language, data) {
     , tier_price: tier_price
     , delivery_time: "2-3"
   };
+
+  if (category_ids)
+    data_new.category_ids = category_ids;
+
+  if(data.metrics) {
+    data_new.metrics = "<ul>";
+    for (var i = data.metrics.length - 1; i >= 0; i--) {
+      data_new.metrics += "<li>"+data.metrics[i]+"</li>";
+    };
+    data_new.metrics += "</ul>";
+  }
+
+  if(data.fittinginfo) {
+    data_new.fittinginfo = data.fittinginfo
+  }
+
   /* Deutsche Übersetzung */
   if (language == "de") {
+
     if(data.quality_de)
       data_new.quality = data.quality_de;
     
@@ -134,19 +153,18 @@ function transform_heritage_to_magento (language, data) {
       var short_description = "";
       // applications in die short description integrieren
       if(data.applications_de) {
-        short_description += "<b>Passend f&uuml;r:</b><br><ul>";
+
+        data_new.applications = "<ul>";
         for (var i = data.applications_de.length - 1; i >= 0; i--) {
-          short_description += "<li>"+data.applications_de[i]+"</li>";
+          data_new.applications += "<li>"+data.applications_de[i]+"</li>";
         };
-        short_description += "</ul>";
+        data_new.applications += "</ul>";
+
+        short_description += "<b>Passend f&uuml;r:</b><br>"+data_new.applications;
       }
       // metrics in die short description integrieren
-      if(data.metrics) {
-        short_description += "<b>Ma&szlig;e:</b><br><ul>";
-        for (var i = data.metrics.length - 1; i >= 0; i--) {
-          short_description += "<li>"+data.metrics[i]+"</li>";
-        };
-        short_description += "</ul>";
+      if(data_new.metrics) {
+        short_description += "<b>Ma&szlig;e:</b><br>"+data_new.metrics;
       }
 
       data_new.short_description = short_description;
@@ -157,8 +175,9 @@ function transform_heritage_to_magento (language, data) {
       var long_description = "";
       if(data.description)
         long_description += data.description;
-      if(data.fittinginfo && data.fittinginfo.length > 5)
+      if(data.fittinginfo && data.fittinginfo.length > 3) {
         long_description += "<br><b>Einbauhinweis:</b>"+data.fittinginfo;
+      }
       data_new.description = long_description;
     }
   /* Englische Formatierung */
@@ -169,21 +188,21 @@ function transform_heritage_to_magento (language, data) {
     /* short description */ 
     {
       var short_description = "";
-      // applications in die short description integrieren
+      
       if(data.applications) {
-        short_description += "<b>For Vehicles:</b><br><ul>";
-        for (var i = data.applications_de.length - 1; i >= 0; i--) {
-          short_description += "<li>"+data.applications_de[i]+"</li>";
+
+        data_new.applications = "<ul>";
+        for (var i = data.applications.length - 1; i >= 0; i--) {
+          data_new.applications += "<li>"+data.applications[i]+"</li>";
         };
-        short_description += "</ul>";
+        data_new.applications += "</ul>";
+
+        // applications in die short description integrieren
+        short_description += "<b>For Vehicles:</b><br>"+data_new.applications;
       }
       // metrics in die short description integrieren
-      if(data.metrics) {
-        short_description += "<b>Metrics:</b><br><ul>";
-        for (var i = data.metrics.length - 1; i >= 0; i--) {
-          short_description += "<li>"+data.metrics[i]+"</li>";
-        };
-        short_description += "</ul>";
+      if(data_new.metrics) {
+        short_description += "<b>Metrics:</b><br>"+data_new.metrics;
       }
 
       data_new.short_description = short_description;
@@ -194,8 +213,9 @@ function transform_heritage_to_magento (language, data) {
       var long_description = "";
       if(data.description)
         long_description += data.description;
-      if(data.fittinginfo && data.fittinginfo.length > 5)
+      if(data.fittinginfo && data.fittinginfo.length > 3) {
         long_description += "<br><b>Fitting Info:</b>"+data.fittinginfo;
+      }
       data_new.description = long_description;
     }
   }
@@ -203,11 +223,11 @@ function transform_heritage_to_magento (language, data) {
   return data_new;
 }
 
-function create_one(type, set, data, number, cb) {
+function create_one(type, set, data, number, store_view, cb) {
   var sku = data.sku;
   //console.log(data);
-  var store_view = config.mageplus.store_view[0].code; // german store view
   delete data.sku;
+  data.category_ids = [config.mageplus.root_id.toString()] // root workaround delete this if it is not good for you
   setTimeout(function() {
     magento.auto.catalog.product.create(type, set, sku, data, store_view, function (error, result, sku) {  
       console.log(sku);
@@ -220,7 +240,7 @@ function create_one(type, set, data, number, cb) {
 
 }
 
-function create_all(data, cb) {
+function create_all(data, store_view, cb) {
   console.log("start create_all!");
 
   var type = "simple";
@@ -228,7 +248,7 @@ function create_all(data, cb) {
 
   magento.manual.init(function(err) {
     for (var i = data.length - 1; i >= 0; i--) {
-      create_one (type, set, data[i], i, function(error, result, sku, number){
+      create_one (type, set, data[i], i, function(error, result, sku, number, store_view){
         //console.log("\n"+number+"\n");
         if(number==0)
           cb();
@@ -237,9 +257,8 @@ function create_all(data, cb) {
   });
 }
 
-function update_one(data, number, cb) {
+function update_one(data, number, store_view, cb) {
   var sku = data.sku;
-  var store_view = config.mageplus.store_view[1].code; // english store view
   delete data.sku;
   setTimeout(function() {
     magento.auto.catalog.product.update(sku, data, store_view, function (error, result, sku) {  
@@ -249,15 +268,15 @@ function update_one(data, number, cb) {
       magento_updated.push({id:result,sku:sku,error:error});
       cb(error, result, sku, number);
     });
-  }, 10);
+  }, 100);
 }
 
 
-function update_all(data, cb) {
+function update_all(data, store_view, cb) {
   console.log("start update_all!")
   magento.manual.init(function(err) {
     for (var i = data.length - 1; i >= 0; i--) {
-      update_one (data[i], i, function(error, result, sku, number){
+      update_one (data[i], i, store_view, function(error, result, sku, number){
         if(number==0)
           cb();
       });
@@ -268,7 +287,7 @@ function update_all(data, cb) {
 function import_heritage_data(cb) {
   console.log("start import_heritage_data!");
   get_all_from_and_do(get_one_from_heritage_and_translate, function(data, sku) {
-    json_fs.save("./heritage_data.json", data, function () {
+    json_fs.save(__dirname+"/heritage_data.json", data, function () {
       cb(data);
     });
   });
@@ -353,12 +372,12 @@ function get_magento_data(language, cb) {
   }
 }
 
-function create_products_for_german_store(cb) {
-  console.log("starte create_products_for_german_store!");
+function create_all_heritage_products_for_magento(language, store_view, cb) {
+  console.log("starte create_all_heritage_products_for_magento!");
 
-  get_magento_data("de", function(data) {
-
-    create_all(data, function() {
+  get_magento_data(language, function(data) {
+    //  = german store view
+    create_all(data, store_view, function() {
       json_fs.save(__dirname+"/magento_created.json", magento_created, function () {
         cb();
       });
@@ -366,12 +385,12 @@ function create_products_for_german_store(cb) {
   });
 }
 
-function update_products_for_english_store(cb) {
-  console.log("starte update_products_for_english_store!");
+function update_all_heritage_products_for_magento(language, store_view, cb) {
+  console.log("starte update_all_heritage_products_for_magento!");
 
-  get_magento_data("en", function(data) {
-
-    update_all(data, function() {
+  get_magento_data(language, function(data) {
+    // config.mageplus.store_view[1].code = english store view
+    update_all(data, store_view, function() {
       json_fs.save(__dirname+"/magento_updated.json", magento_created, function () {
         cb();
       });
@@ -379,8 +398,17 @@ function update_products_for_english_store(cb) {
   });
 }
 
-create_products_for_german_store(function() {
-  update_products_for_english_store(function() {
-    console.log("fertig");
+var german_store_view = config.mageplus.store_view[0].code;
+var english_store_view = config.mageplus.store_view[1].code;
+
+create_all_heritage_products_for_magento("de", german_store_view, function() {
+  update_all_heritage_products_for_magento("de", german_store_view, function() {
+    update_all_heritage_products_for_magento("en", english_store_view, function() {
+      console.log("fertig");
+    });
   });
+});
+
+update_all_heritage_products_for_magento("en", english_store_view, function() {
+  console.log("fertig");
 });
