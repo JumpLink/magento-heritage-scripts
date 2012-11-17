@@ -353,33 +353,34 @@ function get_magento_data(language, cb) {
   }
 }
 
-function create_products_for_german_store() {
+function create_products_for_german_store(cb) {
   console.log("starte create_products_for_german_store!");
 
   get_magento_data("de", function(data) {
 
     create_all(data, function() {
-      console.log("fertig!");
       json_fs.save(__dirname+"/magento_created.json", magento_created, function () {
-
+        cb();
       });
     });
   });
 }
 
-function update_products_for_english_store() {
+function update_products_for_english_store(cb) {
   console.log("starte update_products_for_english_store!");
 
   get_magento_data("en", function(data) {
 
     update_all(data, function() {
-      console.log("fertig!");
       json_fs.save(__dirname+"/magento_updated.json", magento_created, function () {
-
+        cb();
       });
     }); 
   });
 }
 
-update_products_for_english_store();
-//create_products_for_german_store();
+create_products_for_german_store(function() {
+  update_products_for_english_store(function() {
+    console.log("fertig");
+  });
+});
