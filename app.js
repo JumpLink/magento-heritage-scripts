@@ -108,7 +108,7 @@ function transform_heritage_to_magento (language, data, category_ids) {
   var url_key = data.itemname.replace(/\s/g, "-").replace(/,/g, "");
 
   var data_new = {
-    , sku: data.sku
+      sku: data.sku
     , websites: [ config.mageplus.website]
     , name: data.itemname
     , weight: data.weight.toString()
@@ -248,7 +248,7 @@ function create_all(data, store_view, cb) {
 
   magento.manual.init(function(err) {
     for (var i = data.length - 1; i >= 0; i--) {
-      create_one (type, set, data[i], i, function(error, result, sku, number, store_view){
+      create_one (type, set, data[i], i, store_view, function(error, result, sku, number){
         //console.log("\n"+number+"\n");
         if(number==0)
           cb();
@@ -407,8 +407,4 @@ create_all_heritage_products_for_magento("de", german_store_view, function() {
       console.log("fertig");
     });
   });
-});
-
-update_all_heritage_products_for_magento("en", english_store_view, function() {
-  console.log("fertig");
 });
