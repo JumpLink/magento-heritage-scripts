@@ -175,7 +175,7 @@ function transform_heritage_to_magento (language, data, category_ids) {
       var long_description = "";
       if(data.description)
         long_description += data.description;
-      if(data.fittinginfo && data.fittinginfo.length > 3) {
+      if(data.fittinginfo && data.fittinginfo.length > 5) {
         long_description += "<br><b>Einbauhinweis:</b>"+data.fittinginfo;
       }
       data_new.description = long_description;
@@ -213,7 +213,7 @@ function transform_heritage_to_magento (language, data, category_ids) {
       var long_description = "";
       if(data.description)
         long_description += data.description;
-      if(data.fittinginfo && data.fittinginfo.length > 3) {
+      if(data.fittinginfo && data.fittinginfo.length > 5) {
         long_description += "<br><b>Fitting Info:</b>"+data.fittinginfo;
       }
       data_new.description = long_description;
@@ -228,16 +228,16 @@ function create_one(type, set, data, number, store_view, cb) {
   //console.log(data);
   delete data.sku;
   data.category_ids = [config.mageplus.root_id.toString()] // root workaround delete this if it is not good for you
-  setTimeout(function() {
     magento.auto.catalog.product.create(type, set, sku, data, store_view, function (error, result, sku) {  
-      console.log(sku);
-      console.log(error);
-      console.log(result);
+      if(sku)
+        console.log(sku);
+      if(error)
+        console.log(error);
+      if(result)
+        console.log(result);
       magento_created.push({id:result,sku:sku,error:error});
       cb(error, result, sku, number);
     });
-  }, 10);
-
 }
 
 function create_all(data, store_view, cb) {
@@ -260,15 +260,16 @@ function create_all(data, store_view, cb) {
 function update_one(data, number, store_view, cb) {
   var sku = data.sku;
   delete data.sku;
-  setTimeout(function() {
-    magento.auto.catalog.product.update(sku, data, store_view, function (error, result, sku) {  
+  magento.auto.catalog.product.update(sku, data, store_view, function (error, result, sku) { 
+    if(sku)
       console.log(sku);
+    if(error)
       console.log(error);
+    if(result)
       console.log(result);
-      magento_updated.push({id:result,sku:sku,error:error});
-      cb(error, result, sku, number);
-    });
-  }, 100);
+    magento_updated.push({id:result,sku:sku,error:error});
+    cb(error, result, sku, number);
+  });
 }
 
 
@@ -401,10 +402,17 @@ function update_all_heritage_products_for_magento(language, store_view, cb) {
 var german_store_view = config.mageplus.store_view[0].code;
 var english_store_view = config.mageplus.store_view[1].code;
 
-create_all_heritage_products_for_magento("de", german_store_view, function() {
-  update_all_heritage_products_for_magento("de", german_store_view, function() {
-    update_all_heritage_products_for_magento("en", english_store_view, function() {
-      console.log("fertig");
-    });
+// create_all_heritage_products_for_magento("de", german_store_view, function() {
+//   update_all_heritage_products_for_magento("de", german_store_view, function() {
+//     update_all_heritage_products_for_magento("en", english_store_view, function() {
+//       console.log("fertig");
+//     });
+//   });
+// });
+
+
+update_all_heritage_products_for_magento("de", german_store_view, function() {
+  update_all_heritage_products_for_magento("en", english_store_view, function() {
+    console.log("fertig");
   });
 });
