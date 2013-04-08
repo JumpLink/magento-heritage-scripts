@@ -10,6 +10,7 @@ var for_vehicles = []; // translations for heritage "for vehicles" attribute
 var quality = []; // translations for heritage "quality" attribute
 
 var heritage_data = [];
+var heritage_data_part = {};
 var magento_data_en = []; // english transformed heritage data for magento 
 var magento_data_de = []; // german transformed heritage data for magento 
 
@@ -33,7 +34,7 @@ translations.load(cb_for_vehicles, cb_quality);
 function get_one_from_heritage_and_translate(data, number, cb) {
   heritage.auto.catalog.product.info(data, function(data) {
     if(data.sku) { // WICHTIG nur wenn sku vorhanden ist, beim debuggen evtl auskommentieren!
-      //console.log(data);
+      console.log(data.sku);
       if(data.applications && data.applications.length > 0) {
         data.applications_de = [];
 
@@ -69,7 +70,7 @@ function get_one_from_heritage_and_translate(data, number, cb) {
   });
 }
 
-function get_all_from_and_do(do_it, cb) {
+function get_list_from_heritage_and_do_each(do_it, cb) {
   heritage.auto.catalog.product.list(function(data) {
     json_fs.save(__dirname+"/heritage_data_list.json", data, function () {
       for (var i = data.CODE.length - 1; i >= 0; i--) {
@@ -288,21 +289,22 @@ function update_all(data, store_view, cb) {
 
 function import_heritage_data(cb) {
   console.log("start import_heritage_data!");
-  get_all_from_and_do(get_one_from_heritage_and_translate, function(data, sku) {
+  console.log("get list");
+  get_list_from_heritage_and_do_each(get_one_from_heritage_and_translate, function(data, sku) {
     json_fs.save(__dirname+"/heritage_data.json", data, function () {
       cb(data);
     });
   });
 }
 
-function get_heritage_data(cb) {
+function get_heritage_data(overwrite, cb) {
   console.log("start get_heritage_data!");
   // Wenn daten nicht geladen
   if(heritage_data.length < 1) {
     // Daten lokal vorhanden?
     fs.exists(__dirname+"/heritage_data.json", function(exists) {
       // Daten SIND lokal vorhanden!
-      if (exists) {
+      if (exists && overwrite !== true) {
         // Lade lokale Heritage-Daten!
         console.log("load heritage_data from file!");
         heritage_data = json_fs.open(__dirname+"/heritage_data.json");
@@ -324,7 +326,7 @@ function get_heritage_data(cb) {
  */
 function import_magento_data (language, cb) {
   console.log("start import_magento_data!");
-  get_heritage_data(function(data) {
+  get_heritage_data(false, function(data) {
     if(language == "de") {
       for (var i = data.length - 1; i >= 0; i--) {
         magento_data_de[i] = transform_heritage_to_magento(language, data[i]);
@@ -347,7 +349,7 @@ function import_magento_data (language, cb) {
 /*
  * language can be "de" or "en"
  */
-function get_magento_data(language, cb) {
+function get_magento_data(language, overwrite, cb) {
   console.log("start get_magento_data for language: "+language);
   var filename = "magento_data_"+language+".json";
   // Wenn daten nicht geladen
@@ -355,7 +357,7 @@ function get_magento_data(language, cb) {
     // Daten lokal vorhanden?
     fs.exists(__dirname+"/"+filename, function(exists) {
       // Daten SIND lokal vorhanden!
-      if (exists) {
+      if (exists && overwrite !== true) {
         // Lade lokale Daten!
         console.log("load magento_data from file!");
         if(language=="de") { magento_data_de = json_fs.open(__dirname+"/"+filename); cb(magento_data_de); }
@@ -377,7 +379,7 @@ function get_magento_data(language, cb) {
 function create_all_heritage_products_for_magento(language, store_view, cb) {
   console.log("starte create_all_heritage_products_for_magento!");
 
-  get_magento_data(language, function(data) {
+  get_magento_data(language, false, function(data) {
     //  = german store view
     create_all(data, store_view, function() {
       json_fs.save(__dirname+"/magento_created.json", magento_created, function () {
@@ -390,7 +392,7 @@ function create_all_heritage_products_for_magento(language, store_view, cb) {
 function update_all_heritage_products_for_magento(language, store_view, cb) {
   console.log("starte update_all_heritage_products_for_magento!");
 
-  get_magento_data(language, function(data) {
+  get_magento_data(language, false, function(data) {
     // config.mageplus.store_view[1].code = english store view
     update_all(data, store_view, function() {
       json_fs.save(__dirname+"/magento_updated.json", magento_created, function () {
@@ -418,6 +420,72 @@ var english_store_view = config.mageplus.store_view[1].code;
 //   });
 // });
 
-heritage.auto.catalog.product.info("ac999rs014", function(data) {
-  console.log(data);
+// heritage.auto.catalog.product.info("ac999rs014", function(data) {
+//   console.log(data);
+// });
+
+// heritage.auto.catalog.product.list(function() { });
+
+// console.log(heritage.manual.catalog.product.info.url("ac999rs014", null));
+
+function import_heritage_data_in_parts(cb) {
+  heritage.auto.catalog.product.list(function(data) {
+    console.log("list.length: "+data.CODE.length);
+    heritage.auto.catalog.product.infos( data.CODE, function(data) {
+      //console.log(data);
+      heritage_data_part = data;
+      console.log("hallo von app.js");
+      json_fs.save(__dirname+"/heritage_data_part.json", heritage_data_part, function () {
+        //console.log("done");
+        cb();
+      });
+    });
+  });
+}
+
+function get_heritage_data_in_parts(overwrite, cb) {
+  console.log("start get_heritage_data_in_parts!");
+  // Wenn daten nicht geladen
+  if(heritage_data_part.length < 1) {
+    // Daten lokal vorhanden?
+    fs.exists(__dirname+"/heritage_data_part.json", function(exists) {
+      // Daten SIND lokal vorhanden und sollen nicht überschrieben werden!
+      if (exists && overwrite !== true) {
+        // Lade lokale Heritage-Daten!
+        console.log("load heritage_data_part from file!");
+        heritage_data_part = json_fs.open(__dirname+"/heritage_data_part.json");
+        cb(heritage_data_part);
+      } else { // Daten sind NICHT lokal vorhanden!
+        // Lade Heritage-Daten extern
+        import_heritage_data_in_parts(cb);
+      }
+    });
+  } else {
+    console.log("heritage_data already loaded!");
+    // Daten sind bereits geladen
+    cb(heritage_data_part);
+  }
+}
+
+function update_magento_stock_from_heritage_data(cb) {
+  console.log("starte update_magento_stock_from_heritage_data!");
+  magento.manual.init(function(err) {
+    for (var i = 0; i < heritage_data_part.sku.length; i++) {
+      //heritage_data_part.sku[i]
+    }
+  });
+}
+
+
+magento.manual.init(function(err) {
+  console.log(err);
+  magento.auto.catalog.product.info("151-801-129/A", "", function (error, result) {
+    console.log(error);
+    console.log(result);
+  });
+});
+
+var filter = magento.auto.set_filter.sku("021-198-009/B");
+magento.auto.catalog.product.list(filter, config.mageplus.store_view[0].code, function (error, result) {
+  console.log(result);
 });
