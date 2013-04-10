@@ -21,3 +21,4 @@ csv/
 
 vala/magento-heritage-scripts
 vala/*.c
+vala/src/dependencies
