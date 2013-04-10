@@ -7,3 +7,9 @@
 [submodule "nodejs/node_modules/json-fs"]
 	path = nodejs/node_modules/json-fs
 	url = git@github.com:JumpLink/node-json-fs.git
+[submodule "vala/src/dependencies/heritage"]
+	path = vala/src/dependencies/heritage
+	url = git://github.com/JumpLink/vala-heritage.git
+[submodule "vala/src/dependencies/magento"]
+	path = vala/src/dependencies/magento
+	url = git://github.com/JumpLink/vala-magento.git

@@ -12,8 +12,12 @@ pids
 logs
 results
 config
+test.txt
 
 npm-debug.log
 fetch/
 xmlrpc/
 csv/
+
+vala/magento-heritage-scripts
+vala/*.c
