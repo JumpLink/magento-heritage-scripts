@@ -44,7 +44,7 @@ public class MagentoHeritageSync : GLib.Object {
 	/**
 	 *	Diese Methode aktualisiert den Lagerbestand (Stock) von Magento. 
 	 */
-	private bool update_stock_on_magento (string sku, int64 heritage_qty, int64 magento_qty, int64 heritage_dueweeks, int64 heritage_availabilitymessagecode ) {
+	async bool update_stock_on_magento (string sku, int64 heritage_qty, int64 magento_qty, int64 heritage_dueweeks, int64 heritage_availabilitymessagecode ) {
 		int64 total_qty = heritage_qty + magento_qty;
 		int is_in_stock = (total_qty > 0) ? 1 : 0;
 
@@ -89,16 +89,20 @@ public class MagentoHeritageSync : GLib.Object {
 		}
 	}
 
+	async GLib.HashTable<string,Value?> get_magento_product_info (string sku, GLib.ValueArray attributes, Json.Object current_heritage_product_infos_data, int index, out Json.Object transfered_heritage_product_infos_data, out int transfered_index)  {
+		transfered_heritage_product_infos_data = current_heritage_product_infos_data;
+		transfered_index = index;
+		return magento_api.catalog_product_info (sku, "", attributes, "sku");
+	}
+
 	/**
-	 *	Diese Methode beschafft sich alle Produkte von Heritage in 200er Schritten und importiert dessen Daten in Magento.
+	 * Diese Methode beschafft sich alle Produkte von Heritage in 200er Schritten,
+	 * diese 200 Artikel werden dann jeweils einzeln von Magento geladen und anschließend mit den neuen Daten wieder importiert.
 	 */
 	public void import_each_heritage_quantity_to_magento () {
 		bool flawless = true;
 		GLib.ValueArray magento_attributes = new GLib.ValueArray(2);
 		magento_attributes.append("stock_strichweg_qty");
-
-		string[] good_skus = {};
-		string[] bad_skus = {};
 		
 		Heritage.API.each_sum(syncable_skus.to_array (), 200, (part_array) => {
 			Json.Object 	current_heritage_product_infos_root_object  = heritage_api.catalog_product_infos (part_array);
@@ -107,47 +111,41 @@ public class MagentoHeritageSync : GLib.Object {
 
 			for (int i=0; i<current_heritage_product_infos_rowcount; i++) {
 				string heritage_sku = current_heritage_product_infos_data.get_array_member ("ITEMNUMBER").get_string_element (i);
-				int64 heritage_qty = current_heritage_product_infos_data.get_array_member ("FREESTOCKQUANTITY").get_int_element (i);
-				int64 heritage_availabilitymessagecode = current_heritage_product_infos_data.get_array_member ("AVAILABILITYMESSAGECODE").get_int_element (i);
-				int64 heritage_dueweeks = current_heritage_product_infos_data.get_array_member ("DUEWEEKS").get_int_element (i);
 
-				GLib.HashTable<string,Value?> current_magento_product_attributes = magento_api.catalog_product_info (heritage_sku, "", magento_attributes, "sku");
-				int magento_qty = 0;
-				current_magento_product_attributes.for_each ((key, val) => {
-					switch (key) {
-						case "sku":
-							if(heritage_sku != val.get_string())
-								warning (@"skus do not match: $heritage_sku : "+val.get_string());
-							break;
-						case "stock_strichweg_qty":
-							string tmp_str = "0";
-							if ( val != null) {
-								tmp_str = (string) val;
-								if ( tmp_str != null && tmp_str != "" )
-									magento_qty = int.parse ( tmp_str );
-							}
-							break;
-						case "error":
-							flawless = false;
-							break;
-					}
+				//GLib.HashTable<string,Value?> current_magento_product_attributes = magento_api.catalog_product_info (heritage_sku, "", magento_attributes, "sku");
+				this.get_magento_product_info.begin (heritage_sku, magento_attributes, current_heritage_product_infos_data, i, (obj, res) => {
+					Json.Object transfered_heritage_product_infos_data;
+					int index;
+					GLib.HashTable<string,Value?> current_magento_product_attributes = get_magento_product_info.end(res, out transfered_heritage_product_infos_data, out index);
+
+					int64 heritage_qty = transfered_heritage_product_infos_data.get_array_member ("FREESTOCKQUANTITY").get_int_element (index);
+					int64 heritage_availabilitymessagecode = transfered_heritage_product_infos_data.get_array_member ("AVAILABILITYMESSAGECODE").get_int_element (index);
+					int64 heritage_dueweeks = transfered_heritage_product_infos_data.get_array_member ("DUEWEEKS").get_int_element (index);
+
+					int magento_qty = 0;
+					string magento_sku = "";
+					current_magento_product_attributes.for_each ((key, val) => {
+						switch (key) {
+							case "sku":
+								magento_sku = (string) val;
+								break;
+							case "stock_strichweg_qty":
+								string tmp_str = "0";
+								if ( val != null) {
+									tmp_str = (string) val;
+									if ( tmp_str != null && tmp_str != "" )
+										magento_qty = int.parse ( tmp_str );
+								}
+								break;
+							case "error":
+								flawless = false;
+								break;
+						}
+					});
+					update_stock_on_magento(magento_sku, heritage_qty, magento_qty, heritage_dueweeks, heritage_availabilitymessagecode);
 				});
-				if (update_stock_on_magento(heritage_sku, heritage_qty, magento_qty, heritage_dueweeks, heritage_availabilitymessagecode))
-					good_skus += heritage_sku;
-				else
-					bad_skus += heritage_sku;
 			}
 		});
-		debug ("successful sku's: \n");
-		foreach (string good_sku in good_skus) {
-			debug (good_sku);
-			debug ("\n");
-		}
-		debug ("faulty sku's: \n");
-		foreach (string bad_sku in bad_skus) {
-			debug (bad_sku);
-			debug ("\n");
-		}
 	}
 
 	public static Gee.HashSet<string> clone_string_set (Gee.HashSet<string> set) {
