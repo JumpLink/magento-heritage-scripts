@@ -93,9 +93,7 @@ public class MagentoHeritageSync : GLib.Object {
 		}
 	}
 
-	async GLib.HashTable<string,Value?> get_magento_product_info (string sku, GLib.ValueArray attributes, Json.Object current_heritage_product_infos_data, int index, out Json.Object transfered_heritage_product_infos_data, out int transfered_index)  {
-		transfered_heritage_product_infos_data = current_heritage_product_infos_data;
-		transfered_index = index;
+	async GLib.HashTable<string,Value?> get_magento_product_info (string sku, GLib.ValueArray attributes)  {
 		return magento_api.catalog_product_info (sku, "", attributes, "sku");
 	}
 
@@ -112,7 +110,8 @@ public class MagentoHeritageSync : GLib.Object {
 		GLib.ValueArray magento_attributes = new GLib.ValueArray(2);
 		magento_attributes.append("stock_strichweg_qty");
 		
-		Heritage.API.each_sum(syncable_skus.to_array (), 200, (part_array) => {
+		Heritage.API.each_sum(syncable_skus.to_array (), 200, (part_array, heritage_part_index, heritage_part_length) => {
+			print("starte mit part %i/%i\n", heritage_part_index, heritage_part_length);
 			//Json.Object 	current_heritage_product_infos_root_object  = heritage_api.catalog_product_infos (part_array);
 			get_part_of_heritage_product_infos.begin (part_array, (obj, res) => {
 				Json.Object	current_heritage_product_infos_root_object = get_part_of_heritage_product_infos.end (res);
@@ -122,16 +121,14 @@ public class MagentoHeritageSync : GLib.Object {
 
 				for (int i=0; i<current_heritage_product_infos_rowcount; i++) {
 					string heritage_sku = current_heritage_product_infos_data.get_array_member ("ITEMNUMBER").get_string_element (i);
-
+					int index = i;
 					//GLib.HashTable<string,Value?> current_magento_product_attributes = magento_api.catalog_product_info (heritage_sku, "", magento_attributes, "sku");
-					this.get_magento_product_info.begin (heritage_sku, magento_attributes, current_heritage_product_infos_data, i, (obj, res) => {
-						Json.Object transfered_heritage_product_infos_data;
-						int index;
-						GLib.HashTable<string,Value?> current_magento_product_attributes = get_magento_product_info.end(res, out transfered_heritage_product_infos_data, out index);
+					this.get_magento_product_info.begin (heritage_sku, magento_attributes, (obj, res) => {
+						GLib.HashTable<string,Value?> current_magento_product_attributes = get_magento_product_info.end(res);
 
-						int64 heritage_qty = transfered_heritage_product_infos_data.get_array_member ("FREESTOCKQUANTITY").get_int_element (index);
-						int64 heritage_availabilitymessagecode = transfered_heritage_product_infos_data.get_array_member ("AVAILABILITYMESSAGECODE").get_int_element (index);
-						int64 heritage_dueweeks = transfered_heritage_product_infos_data.get_array_member ("DUEWEEKS").get_int_element (index);
+						int64 heritage_qty = current_heritage_product_infos_data.get_array_member ("FREESTOCKQUANTITY").get_int_element (index);
+						int64 heritage_availabilitymessagecode = current_heritage_product_infos_data.get_array_member ("AVAILABILITYMESSAGECODE").get_int_element (index);
+						int64 heritage_dueweeks = current_heritage_product_infos_data.get_array_member ("DUEWEEKS").get_int_element (index);
 
 						int magento_qty = 0;
 						string magento_sku = "";
@@ -139,6 +136,8 @@ public class MagentoHeritageSync : GLib.Object {
 							switch (key) {
 								case "sku":
 									magento_sku = (string) val;
+									if (magento_sku != heritage_sku)
+										warning (@"$magento_sku != $heritage_sku");
 									break;
 								case "stock_strichweg_qty":
 									string tmp_str = "0";
@@ -154,13 +153,14 @@ public class MagentoHeritageSync : GLib.Object {
 							}
 						});
 						update_stock_on_magento.begin (magento_sku, heritage_qty, magento_qty, heritage_dueweeks, heritage_availabilitymessagecode, (obj, res) => {
-							// if(index >= current_heritage_product_infos_rowcount-1)
-							// 	loop.quit();
+							if( (index >= current_heritage_product_infos_rowcount-1) && (heritage_part_index >= heritage_part_length) )
+								loop.quit();
 						});
 					});
 				}
 			});
 		});
+		loop.run ();
 	}
 
 	public static Gee.HashSet<string> clone_string_set (Gee.HashSet<string> set) {
