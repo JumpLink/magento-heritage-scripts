@@ -112,7 +112,7 @@ public class MagentoHeritageSync : GLib.Object {
 		GLib.ValueArray magento_attributes = new GLib.ValueArray(2);
 		magento_attributes.append("stock_strichweg_qty");
 		
-		Heritage.API.each_sum(syncable_skus.to_array (), 200, (part_array, heritage_part_index, heritage_part_count) => {
+		Heritage.API.each_sum(syncable_skus.to_array (), 200, (part_array) => {
 			//Json.Object 	current_heritage_product_infos_root_object  = heritage_api.catalog_product_infos (part_array);
 			get_part_of_heritage_product_infos.begin (part_array, (obj, res) => {
 				Json.Object	current_heritage_product_infos_root_object = get_part_of_heritage_product_infos.end (res);
