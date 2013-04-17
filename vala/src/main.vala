@@ -19,7 +19,11 @@ public class MagentoHeritageSync : GLib.Object {
 	Gee.HashSet<string> only_heritage_skus;
 	Gee.HashSet<string> only_magento_skus;
 
+	MainLoop loop;
+
 	public MagentoHeritageSync () {
+
+		loop = new MainLoop();
 		
 		// Magento with config
 		Magento.Config magento_config = Magento.Config();
@@ -95,6 +99,10 @@ public class MagentoHeritageSync : GLib.Object {
 		return magento_api.catalog_product_info (sku, "", attributes, "sku");
 	}
 
+	async Json.Object get_part_of_heritage_product_infos (string[] part_array)  {
+		return heritage_api.catalog_product_infos (part_array);
+	}
+
 	/**
 	 * Diese Methode beschafft sich alle Produkte von Heritage in 200er Schritten,
 	 * diese 200 Artikel werden dann jeweils einzeln von Magento geladen und anschließend mit den neuen Daten wieder importiert.
@@ -104,47 +112,54 @@ public class MagentoHeritageSync : GLib.Object {
 		GLib.ValueArray magento_attributes = new GLib.ValueArray(2);
 		magento_attributes.append("stock_strichweg_qty");
 		
-		Heritage.API.each_sum(syncable_skus.to_array (), 200, (part_array) => {
-			Json.Object 	current_heritage_product_infos_root_object  = heritage_api.catalog_product_infos (part_array);
-			int64 			current_heritage_product_infos_rowcount		= current_heritage_product_infos_root_object.get_int_member 	("ROWCOUNT");
-			Json.Object 	current_heritage_product_infos_data			= current_heritage_product_infos_root_object.get_object_member 	("DATA");
+		Heritage.API.each_sum(syncable_skus.to_array (), 200, (part_array, heritage_part_index, heritage_part_count) => {
+			//Json.Object 	current_heritage_product_infos_root_object  = heritage_api.catalog_product_infos (part_array);
+			get_part_of_heritage_product_infos.begin (part_array, (obj, res) => {
+				Json.Object	current_heritage_product_infos_root_object = get_part_of_heritage_product_infos.end (res);
+			
+				int64 			current_heritage_product_infos_rowcount		= current_heritage_product_infos_root_object.get_int_member 	("ROWCOUNT");
+				Json.Object 	current_heritage_product_infos_data			= current_heritage_product_infos_root_object.get_object_member 	("DATA");
 
-			for (int i=0; i<current_heritage_product_infos_rowcount; i++) {
-				string heritage_sku = current_heritage_product_infos_data.get_array_member ("ITEMNUMBER").get_string_element (i);
+				for (int i=0; i<current_heritage_product_infos_rowcount; i++) {
+					string heritage_sku = current_heritage_product_infos_data.get_array_member ("ITEMNUMBER").get_string_element (i);
 
-				//GLib.HashTable<string,Value?> current_magento_product_attributes = magento_api.catalog_product_info (heritage_sku, "", magento_attributes, "sku");
-				this.get_magento_product_info.begin (heritage_sku, magento_attributes, current_heritage_product_infos_data, i, (obj, res) => {
-					Json.Object transfered_heritage_product_infos_data;
-					int index;
-					GLib.HashTable<string,Value?> current_magento_product_attributes = get_magento_product_info.end(res, out transfered_heritage_product_infos_data, out index);
+					//GLib.HashTable<string,Value?> current_magento_product_attributes = magento_api.catalog_product_info (heritage_sku, "", magento_attributes, "sku");
+					this.get_magento_product_info.begin (heritage_sku, magento_attributes, current_heritage_product_infos_data, i, (obj, res) => {
+						Json.Object transfered_heritage_product_infos_data;
+						int index;
+						GLib.HashTable<string,Value?> current_magento_product_attributes = get_magento_product_info.end(res, out transfered_heritage_product_infos_data, out index);
 
-					int64 heritage_qty = transfered_heritage_product_infos_data.get_array_member ("FREESTOCKQUANTITY").get_int_element (index);
-					int64 heritage_availabilitymessagecode = transfered_heritage_product_infos_data.get_array_member ("AVAILABILITYMESSAGECODE").get_int_element (index);
-					int64 heritage_dueweeks = transfered_heritage_product_infos_data.get_array_member ("DUEWEEKS").get_int_element (index);
+						int64 heritage_qty = transfered_heritage_product_infos_data.get_array_member ("FREESTOCKQUANTITY").get_int_element (index);
+						int64 heritage_availabilitymessagecode = transfered_heritage_product_infos_data.get_array_member ("AVAILABILITYMESSAGECODE").get_int_element (index);
+						int64 heritage_dueweeks = transfered_heritage_product_infos_data.get_array_member ("DUEWEEKS").get_int_element (index);
 
-					int magento_qty = 0;
-					string magento_sku = "";
-					current_magento_product_attributes.for_each ((key, val) => {
-						switch (key) {
-							case "sku":
-								magento_sku = (string) val;
-								break;
-							case "stock_strichweg_qty":
-								string tmp_str = "0";
-								if ( val != null) {
-									tmp_str = (string) val;
-									if ( tmp_str != null && tmp_str != "" )
-										magento_qty = int.parse ( tmp_str );
-								}
-								break;
-							case "error":
-								flawless = false;
-								break;
-						}
+						int magento_qty = 0;
+						string magento_sku = "";
+						current_magento_product_attributes.for_each ((key, val) => {
+							switch (key) {
+								case "sku":
+									magento_sku = (string) val;
+									break;
+								case "stock_strichweg_qty":
+									string tmp_str = "0";
+									if ( val != null) {
+										tmp_str = (string) val;
+										if ( tmp_str != null && tmp_str != "" )
+											magento_qty = int.parse ( tmp_str );
+									}
+									break;
+								case "error":
+									flawless = false;
+									break;
+							}
+						});
+						update_stock_on_magento.begin (magento_sku, heritage_qty, magento_qty, heritage_dueweeks, heritage_availabilitymessagecode, (obj, res) => {
+							// if(index >= current_heritage_product_infos_rowcount-1)
+							// 	loop.quit();
+						});
 					});
-					update_stock_on_magento(magento_sku, heritage_qty, magento_qty, heritage_dueweeks, heritage_availabilitymessagecode);
-				});
-			}
+				}
+			});
 		});
 	}
 
