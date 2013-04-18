@@ -111,7 +111,7 @@ public class MagentoHeritageSync : GLib.Object {
 		magento_attributes.append("stock_strichweg_qty");
 		
 		Heritage.API.each_sum(syncable_skus.to_array (), 200, (part_array, heritage_part_index, heritage_part_length) => {
-			print("starte mit part %i/%i\n", heritage_part_index, heritage_part_length);
+			print ("starte mit part %i/%i\n", heritage_part_index, heritage_part_length);
 			//Json.Object 	current_heritage_product_infos_root_object  = heritage_api.catalog_product_infos (part_array);
 			get_part_of_heritage_product_infos.begin (part_array, (obj, res) => {
 				Json.Object	current_heritage_product_infos_root_object = get_part_of_heritage_product_infos.end (res);
@@ -153,7 +153,7 @@ public class MagentoHeritageSync : GLib.Object {
 							}
 						});
 						update_stock_on_magento.begin (magento_sku, heritage_qty, magento_qty, heritage_dueweeks, heritage_availabilitymessagecode, (obj, res) => {
-							if( (index >= current_heritage_product_infos_rowcount-1) && (heritage_part_index >= heritage_part_length) )
+							if( (index >= current_heritage_product_infos_rowcount-1) && (heritage_part_index >= heritage_part_length-1) )
 								loop.quit();
 						});
 					});
