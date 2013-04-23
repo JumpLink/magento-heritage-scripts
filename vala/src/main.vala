@@ -105,85 +105,6 @@ public class MagentoHeritageSync : GLib.Object {
 	 * Diese Methode beschafft sich alle Produkte von Heritage in 200er Schritten,
 	 * diese 200 Artikel werden dann jeweils einzeln von Magento geladen und anschließend mit den neuen Daten wieder importiert.
 	 */
-	public bool import_each_heritage_quantity_to_magento_via_dbus () {
-
-		bool flawless = true;
-		ProductStock dbus_product_stock = null;
-		try {
-			dbus_product_stock = Bus.get_proxy_sync (BusType.SESSION, "org.jumplink.magento", "/org/jumplink/magento");
-		} catch (IOError e) {
-			error ("%s\n", e.message);
-		}
-		
-		Heritage.API.each_sum(syncable_skus.to_array (), 200, (part_array, heritage_part_index, heritage_part_length) => {
-			
-			Json.Object	current_heritage_product_infos_root_object = heritage_api.catalog_product_infos (part_array);
-		
-			int64 			current_heritage_product_infos_rowcount		= current_heritage_product_infos_root_object.get_int_member 	("ROWCOUNT");
-			Json.Object 	current_heritage_product_infos_data			= current_heritage_product_infos_root_object.get_object_member 	("DATA");
-
-			print ("starte mit part %i/%i mit %i Artikeln \n", heritage_part_index, heritage_part_length, (int) current_heritage_product_infos_rowcount);
-
-			for (int i=0; i<current_heritage_product_infos_rowcount; i++) {
-				print("# %i\n", i);
-				string heritage_sku = current_heritage_product_infos_data.get_array_member ("ITEMNUMBER").get_string_element (i);				
-				
-				print("heritage_sku: %s\n", heritage_sku);
-
-				int magento_qty = 0;
-
-				try {
-					magento_qty = int.parse ( dbus_product_stock.get (heritage_sku) );
-				} catch (IOError e) {
-					warning ("%s\n", e.message);
-				}
-
-				print("magento_qty: %i\n", magento_qty);
-
-				int heritage_qty = (int) current_heritage_product_infos_data.get_array_member ("FREESTOCKQUANTITY").get_int_element (i);
-				int64 heritage_availabilitymessagecode = current_heritage_product_infos_data.get_array_member ("AVAILABILITYMESSAGECODE").get_int_element (i);
-				int64 heritage_dueweeks = current_heritage_product_infos_data.get_array_member ("DUEWEEKS").get_int_element (i);
-
-				print("heritage_qty: %i\n", heritage_qty);
-
-				int total_qty = heritage_qty + magento_qty;
-				int is_in_stock = (total_qty > 0) ? 1 : 0;
-
-				print("total_qty: %i\n", total_qty);
-
-				switch (heritage_availabilitymessagecode) {
-					case 1: // "Not currently available"
-						heritage_availabilitymessagecode = 45;
-					break;
-					case 2: // "Available soon, date to be confirmed"
-						heritage_availabilitymessagecode = 46;
-					break;
-					case 3: // "Due in one week"
-						heritage_availabilitymessagecode = 47;
-					break;
-					case 4: // "Available int [dueWeeks] weeks"
-						heritage_availabilitymessagecode = 48;
-					break;
-				}
-
-				print ("heritage_availabilitymessagecode: %i\n", (int) heritage_availabilitymessagecode);
-
-				try {
-					dbus_product_stock.update (heritage_sku, magento_qty.to_string(), heritage_qty.to_string(), total_qty.to_string());
-					print (@"Saved: $heritage_sku \theritage_qty: $heritage_qty \tmagento_qty: $magento_qty \ttotal: $total_qty \t heritage_dueweeks: $heritage_dueweeks \t heritage_availabilitymessagecode: $heritage_availabilitymessagecode \n");
-				} catch (IOError e) {
-					warning ("%s\n", e.message);
-				}
-			}
-		});
-	print ("fertig\n");
-		return flawless;
-	}
-
-	/**
-	 * Diese Methode beschafft sich alle Produkte von Heritage in 200er Schritten,
-	 * diese 200 Artikel werden dann jeweils einzeln von Magento geladen und anschließend mit den neuen Daten wieder importiert.
-	 */
 	public bool import_each_heritage_quantity_to_magento_via_xmlrpc () {
 		bool flawless = true;
 
@@ -244,7 +165,107 @@ public class MagentoHeritageSync : GLib.Object {
 		return flawless;
 	}
 
+	public void start_dbus () {
+		// Variable ist gesetzt?
+		unowned string dbus_session_bus_address = GLib.Environment.get_variable ("DBUS_SESSION_BUS_ADDRESS");
+		if (dbus_session_bus_address == null || dbus_session_bus_address == "" || dbus_session_bus_address.length < 3 ) {
+			if(dbus_session_bus_address != null)
+				print ("dbus_session_bus_address is %s\n", dbus_session_bus_address);
+			else {
+				print ("dbus_session_bus_address is null\n");
+			}
+			print ("starte dbus-launch\n");
+			try {
+				GLib.Process.spawn_command_line_async ("dbus-launch");
+				print ("gestartet\n");
+			} catch (SpawnError e) {
+				warning ("Error: %s\n", e.message);
+			}
+		} else {
+			debug ("dbus läuft bereits.\n"); 
+		}
+	}
 
+	/**
+	 * Wie import_each_heritage_quantity_to_magento_via_xmlrpc nur mithilfe von D-Bus
+	 * @see import_each_heritage_quantity_to_magento_via_xmlrpc
+	 */
+	public bool import_each_heritage_quantity_to_magento_via_dbus () {
+		this.start_dbus ();
+		bool flawless = true;
+		ProductStock dbus_product_stock = null;
+		try {
+			dbus_product_stock = Bus.get_proxy_sync (BusType.SESSION, "org.jumplink.magento", "/org/jumplink/magento");
+		} catch (IOError e) {
+			error ("%s\n", e.message);
+		}
+		
+		Heritage.API.each_sum(syncable_skus.to_array (), 200, (part_array, heritage_part_index, heritage_part_length) => {
+			
+			Json.Object	current_heritage_product_infos_root_object = heritage_api.catalog_product_infos (part_array);
+		
+			int64 			current_heritage_product_infos_rowcount		= current_heritage_product_infos_root_object.get_int_member 	("ROWCOUNT");
+			Json.Object 	current_heritage_product_infos_data			= current_heritage_product_infos_root_object.get_object_member 	("DATA");
+
+			print ("starte mit part %i/%i mit %i Artikeln \n", heritage_part_index, heritage_part_length, (int) current_heritage_product_infos_rowcount);
+
+			for (int i=0; i<current_heritage_product_infos_rowcount; i++) {
+				debug ("# %i\n", i);
+				string heritage_sku = current_heritage_product_infos_data.get_array_member ("ITEMNUMBER").get_string_element (i);				
+				
+				debug ("heritage_sku: %s\n", heritage_sku);
+
+				int magento_qty = 0;
+
+				try {
+					magento_qty = int.parse ( dbus_product_stock.get (heritage_sku) );
+				} catch (IOError e) {
+					warning ("%s\n", e.message);
+					flawless = false;
+				}
+
+				debug ("magento_qty: %i\n", magento_qty);
+
+				int heritage_qty = (int) current_heritage_product_infos_data.get_array_member ("FREESTOCKQUANTITY").get_int_element (i);
+				int64 heritage_availabilitymessagecode = current_heritage_product_infos_data.get_array_member ("AVAILABILITYMESSAGECODE").get_int_element (i);
+				int64 heritage_dueweeks = current_heritage_product_infos_data.get_array_member ("DUEWEEKS").get_int_element (i);
+
+				debug ("heritage_qty: %i\n", heritage_qty);
+
+				int total_qty = heritage_qty + magento_qty;
+				int is_in_stock = (total_qty > 0) ? 1 : 0;
+
+				debug ("total_qty: %i\n", total_qty);
+
+				switch (heritage_availabilitymessagecode) {
+					case 1: // "Not currently available"
+						heritage_availabilitymessagecode = 45;
+					break;
+					case 2: // "Available soon, date to be confirmed"
+						heritage_availabilitymessagecode = 46;
+					break;
+					case 3: // "Due in one week"
+						heritage_availabilitymessagecode = 47;
+					break;
+					case 4: // "Available int [dueWeeks] weeks"
+						heritage_availabilitymessagecode = 48;
+					break;
+				}
+
+				debug ("heritage_availabilitymessagecode: %i\n", (int) heritage_availabilitymessagecode);
+
+				try {
+					dbus_product_stock.update (heritage_sku, magento_qty.to_string(), heritage_qty.to_string(), total_qty.to_string(), heritage_dueweeks.to_string(), heritage_availabilitymessagecode.to_string());
+					print (@"Saved: $heritage_sku \theritage_qty: $heritage_qty \tmagento_qty: $magento_qty \ttotal: $total_qty \t heritage_dueweeks: $heritage_dueweeks \t heritage_availabilitymessagecode: $heritage_availabilitymessagecode \n");
+				} catch (IOError e) {
+					warning ("%s\n", e.message);
+					flawless = false;
+				}
+			}
+		});
+	print ("fertig\n");
+		return flawless;
+	}
 
 	public static Gee.HashSet<string> clone_string_set (Gee.HashSet<string> set) {
 		Gee.HashSet<string> new_set = new Gee.HashSet<string> ();
@@ -297,6 +318,7 @@ public class MagentoHeritageSync : GLib.Object {
 	public static int main (string[] args) {
 		MagentoHeritageSync app = new MagentoHeritageSync ();
 		// app.read_and_transform_magento_csv ("./test.csv");
+		// app.start_dbus ();
 		app.load_data ();
 		app.import_each_heritage_quantity_to_magento_via_dbus ();
 		//app.print_data ();
