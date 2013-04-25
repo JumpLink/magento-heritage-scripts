@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [submodule "nodejs/node_modules/heritage"]
 	path = nodejs/node_modules/heritage
 	url = git://github.com/JumpLink/node-heritage.git
@@ -13,3 +14,8 @@
 [submodule "vala/src/dependencies/magento"]
 	path = vala/src/dependencies/magento
 	url = git://github.com/JumpLink/vala-magento.git
+=======
+[submodule "node_modules/json-fs"]
+	path = node_modules/json-fs
+	url = git://github.com/JumpLink/node-json-fs.git
+>>>>>>> 81d3bbc8d4a6018120d1aee1141d9341adca552a

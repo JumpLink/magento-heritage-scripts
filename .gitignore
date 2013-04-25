@@ -1,17 +1,25 @@
 lib-cov
 *.seed
 *.log
+<<<<<<< HEAD
+=======
+*.csv
+>>>>>>> 81d3bbc8d4a6018120d1aee1141d9341adca552a
 *.dat
 *.out
 *.pid
 *.gz
+<<<<<<< HEAD
 *.sublime*
 *.json
+=======
+>>>>>>> 81d3bbc8d4a6018120d1aee1141d9341adca552a
 
 pids
 logs
 results
 config
+<<<<<<< HEAD
 test.txt
 core
 
@@ -24,3 +32,8 @@ optimist/
 vala/magento-heritage-scripts
 vala/*.c
 vala/src/dependencies
+=======
+
+fetch
+npm-debug.log
+>>>>>>> 81d3bbc8d4a6018120d1aee1141d9341adca552a
