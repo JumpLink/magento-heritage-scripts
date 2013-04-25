@@ -19,6 +19,7 @@ npm-debug.log
 fetch/
 xmlrpc/
 csv/
+optimist/
 
 vala/magento-heritage-scripts
 vala/*.c
