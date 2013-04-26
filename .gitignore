@@ -20,6 +20,8 @@ fetch/
 xmlrpc/
 csv/
 optimist/
+emailjs/
+simplesets/
 
 vala/magento-heritage-scripts
 vala/*.c
