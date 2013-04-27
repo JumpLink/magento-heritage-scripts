@@ -166,24 +166,26 @@ public class MagentoHeritageSync : GLib.Object {
 	}
 
 	public void start_dbus () {
+		// TODO run dbus without x11 http://stackoverflow.com/questions/5530542/dbus-finch-pidgin-without-x11
+
 		// Variable ist gesetzt?
-		unowned string dbus_session_bus_address = GLib.Environment.get_variable ("DBUS_SESSION_BUS_ADDRESS");
-		if (dbus_session_bus_address == null || dbus_session_bus_address == "" || dbus_session_bus_address.length < 3 ) {
-			if(dbus_session_bus_address != null)
-				print ("dbus_session_bus_address is %s\n", dbus_session_bus_address);
-			else {
-				print ("dbus_session_bus_address is null\n");
-			}
-			print ("starte dbus-launch\n");
-			try {
-				GLib.Process.spawn_command_line_async ("dbus-launch");
-				print ("gestartet\n");
-			} catch (SpawnError e) {
-				warning ("Error: %s\n", e.message);
-			}
-		} else {
-			debug ("dbus läuft bereits.\n"); 
-		}
+		// unowned string dbus_session_bus_address = GLib.Environment.get_variable ("DBUS_SESSION_BUS_ADDRESS");
+		// if (dbus_session_bus_address == null || dbus_session_bus_address == "" || dbus_session_bus_address.length < 3 ) {
+		// 	if(dbus_session_bus_address != null)
+		// 		print ("dbus_session_bus_address is %s\n", dbus_session_bus_address);
+		// 	else {
+		// 		print ("dbus_session_bus_address is null\n");
+		// 	}
+		// 	print ("starte dbus-launch\n");
+		// 	try {
+		// 		GLib.Process.spawn_command_line_async ("dbus-launch");
+		// 		print ("gestartet\n");
+		// 	} catch (SpawnError e) {
+		// 		warning ("Error: %s\n", e.message);
+		// 	}
+		// } else {
+		// 	debug ("dbus läuft bereits.\n"); 
+		// }
 	}
 
 	/**
@@ -315,12 +317,32 @@ public class MagentoHeritageSync : GLib.Object {
 		}
 	}
 
+/*
+ * Ändert ein Attribute in allen Produkten
+ */
+	public void change_all_attribiutes_xmlrpc(string name, int val) {
+		
+		magento_skus = magento_api.catalog_product_list_all_skus ();
+
+		GLib.HashTable<string,Value?> productData = Soup.value_hash_new ();
+		productData.insert ( name, (int) val ) ;
+
+		string storeView = "shop_de";
+		string identifierType = "sku";
+
+		foreach (string sku in magento_skus) {
+			magento_api.catalog_product_update (sku, productData, storeView, identifierType);
+			print ("updated "name+"on "+sku+"\n");
+		}
+	}
+
 	public static int main (string[] args) {
 		MagentoHeritageSync app = new MagentoHeritageSync ();
 		// app.read_and_transform_magento_csv ("./test.csv");
 		// app.start_dbus ();
-		app.load_data ();
-		app.import_each_heritage_quantity_to_magento_via_dbus ();
+		//app.load_data ();
+		//app.import_each_heritage_quantity_to_magento_via_dbus ();
+		app.change_all_attribiutes_xmlrpc ("tax_class_id", 1);
 		//app.print_data ();
 		// Csv.Loader csv = new Csv.Loader();
 		// csv.read ("./test.csv");
