@@ -332,7 +332,7 @@ public class MagentoHeritageSync : GLib.Object {
 
 		foreach (string sku in magento_skus) {
 			magento_api.catalog_product_update (sku, productData, storeView, identifierType);
-			print ("updated "name+"on "+sku+"\n");
+			print ("updated "+name+"on "+sku+"\n");
 		}
 	}
 
