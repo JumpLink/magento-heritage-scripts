@@ -193,7 +193,7 @@ public class MagentoHeritageSync : GLib.Object {
 	 * @see import_each_heritage_quantity_to_magento_via_xmlrpc
 	 */
 	public bool import_each_heritage_quantity_to_magento_via_dbus () {
-		this.start_dbus ();
+		//this.start_dbus ();
 		bool flawless = true;
 		ProductStock dbus_product_stock = null;
 		try {
