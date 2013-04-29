@@ -20,7 +20,11 @@ var argv = require('optimist')
     .describe('nopricemail', 'Do not send an mail on price-changes')
     .argv;
 
-var stock_csv_file = '"sku","_type","_attribute_set","_store","stock_vwheritage_availabilitymessagecode","stock_vwheritage_dueweeks","stock_vwheritage_qty","stock_strichweg_qty","qty","is_in_stock","vwheritage_price_pound"\r\n';
+/*
+ * magentobug: magento sets all attributes wit a defaultvalue to the defaultvalue: https://plus.google.com/111468575764025343400/posts/BvtYDPyoDw6
+ * WORKAROUND for the magentobug: forward the attrbutes e.g. manufacturer
+ */
+var stock_csv_file = '"sku","_type","_attribute_set","_store","stock_vwheritage_availabilitymessagecode","stock_vwheritage_dueweeks","stock_vwheritage_qty","stock_strichweg_qty","qty","is_in_stock","vwheritage_price_pound","manufacturer"\r\n';
 var price_changes_csv_file = '"sku","old_price","new_price","new_price_in_pount"\r\n';
 var heritage_data;
 var heritage_skus_set;
@@ -145,9 +149,9 @@ import_heritage_data_in_parts(function() {
 			var qty = stock_vwheritage_qty + stock_strichweg_qty;
 			var is_in_stock = qty > 0 ? 1 : 0;
 			var vwheritage_price_pound = precise_round( get_price_or_null(heritage_data["COSTPRICE"][i]), 2 );
-			var new_line = '"'+sku+'","'+_type+'","'+_attribute_set+'","'+_store+'","'+stock_vwheritage_availabilitymessagecode+'","'+stock_vwheritage_dueweeks+'","'+stock_vwheritage_qty+'","'+stock_strichweg_qty+'","'+qty+'","'+is_in_stock+'","'+vwheritage_price_pound+'"';
-			// add_line_to_csv_file (stock_csv_file, new_line );
-			stock_csv_file += new_line+"\r\n";
+			var manufacturer = row.manufacturer;
+			var new_line = '"'+sku+'","'+_type+'","'+_attribute_set+'","'+_store+'","'+stock_vwheritage_availabilitymessagecode+'","'+stock_vwheritage_dueweeks+'","'+stock_vwheritage_qty+'","'+stock_strichweg_qty+'","'+qty+'","'+is_in_stock+'","'+vwheritage_price_pound+'","'+manufacturer+'"\r\n';
+			stock_csv_file += new_line;
 
 			var new_cost_price = precise_round( vwheritage_price_pound*EURO, 2);
 			var current_cost_price = precise_round( get_price_or_null(row.cost_price), 2 );
