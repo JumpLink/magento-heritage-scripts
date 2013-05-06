@@ -31,9 +31,7 @@ var heritage_skus_set;
 var magento_skus_set = new sets.Set();
 var MWST = 1.19; // VAT
 var EURO = 1.27;
-//var magento_csv_filename = __dirname+'/csv_tables/25-04-13.csv';
 var magento_csv_filename  = argv.source;
-//var result_csv_filename = __dirname+'/csv_tables/please_update_product_stock.csv';
 var result_csv_filename = argv.output;
 
 function save_csv_file(string_to_save, filename) {
@@ -58,7 +56,6 @@ function import_heritage_data_in_parts(cb) {
 }
 
 function get_index_from_heritage_attribute(name, value) {
-	//console.log(heritage_data[name]);
 	for (var i = 0; i < heritage_data[name].length; i++) {
 		if(heritage_data[name][i] == value) {
 			return i;
@@ -143,6 +140,22 @@ import_heritage_data_in_parts(function() {
 			var _attribute_set = "";
 			var _store = "";
 			var stock_vwheritage_availabilitymessagecode = get_number_or_null(heritage_data["AVAILABILITYMESSAGECODE"][i]);
+
+			switch (stock_vwheritage_availabilitymessagecode) {
+				case 1: // "Not currently available"
+					stock_vwheritage_availabilitymessagecode = 45;
+				break;
+				case 2: // "Available soon, date to be confirmed"
+					stock_vwheritage_availabilitymessagecode = 46;
+				break;
+				case 3: // "Due in one week"
+					stock_vwheritage_availabilitymessagecode = 47;
+				break;
+				case 4: // "Available in [dueWeeks] weeks"
+					stock_vwheritage_availabilitymessagecode = 48;
+				break;
+			}
+
 			var stock_vwheritage_dueweeks = get_number_or_null(heritage_data["DUEWEEKS"][i]);
 			var stock_vwheritage_qty = get_number_or_null(heritage_data["FREESTOCKQUANTITY"][i]);
 			var stock_strichweg_qty = get_number_or_null(row.stock_strichweg_qty);
@@ -157,8 +170,6 @@ import_heritage_data_in_parts(function() {
 			var current_cost_price = precise_round( get_price_or_null(row.cost_price), 2 );
 			if(new_cost_price != current_cost_price) {
 				new_line = '"'+sku+'","'+current_cost_price+'","'+new_cost_price+'","'+vwheritage_price_pound+'"';
-				//console.log(new_line);
-				//add_line_to_csv_file (price_changes_csv_file, new_line);
 				price_changes_csv_file += new_line+"\r\n";
 			}
 		}

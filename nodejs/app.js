@@ -87,45 +87,45 @@ function get_list_from_heritage_and_do_each(do_it, cb) {
 function transform_heritage_to_magento (language, data, category_ids) {
   var tier_price = [
     {
-        customer_group_id: 4 // 4 = Rabattstufe 1
-      , website: "all"
-      , qty: 1 // Menge
-      , price: data.PRICE2 * EURO * MWST // (double)
+      customer_group_id: 4, // 4 = Rabattstufe 1
+      website: "all",
+      qty: 1, // Menge
+      price: data.PRICE2 * EURO * MWST // (double)
     },
     {
-        customer_group_id: 5 // 5 = Rabattstufe 2
-      , website: "all"
-      , qty: 1
-      , price: data.PRICE3 * EURO * MWST
+      customer_group_id: 5, // 5 = Rabattstufe 2
+      website: "all",
+      qty: 1,
+      price: data.PRICE3 * EURO * MWST
     },
     {
-        customer_group_id: 6 // 6 = Rabattstufe 3
-      , website: "all"
-      , qty: 1
-      , price: data.PRICE4 * EURO * MWST
+      customer_group_id: 6, // 6 = Rabattstufe 3
+      website: "all",
+      qty: 1,
+      price: data.PRICE4 * EURO * MWST
     }
   ];
 
   var url_key = data.itemname.replace(/\s/g, "-").replace(/,/g, "");
 
   var data_new = {
-      sku: data.sku
-    , websites: [ config.mageplus.website]
-    , name: data.itemname
-    , weight: data.weight.toString()
+    sku: data.sku,
+    websites: [ config.mageplus.website],
+    name: data.itemname,
+    weight: data.weight.toString(),
     //, applications: data.applications
-    , status: 2 //deaktiviert
-    , url_key: url_key
-    , url_path: url_key+".html"
-    , visibility:  "4" //Katalog, Suche
-    , price: data.RETAILPRICE * MWST * EURO
-    , recommend_price: data.RETAILPRICE * MWST * EURO
-    , recommend_price_netto: data.RETAILPRICE * EURO
-    , cost_price: data.COSTPRICE * EURO // netto
+    status: 2, //deaktiviert
+    url_key: url_key,
+    url_path: url_key+".html",
+    visibility:  "4", //Katalog, Suche
+    price: data.RETAILPRICE * MWST * EURO,
+    recommend_price: data.RETAILPRICE * MWST * EURO,
+    recommend_price_netto: data.RETAILPRICE * EURO,
+    cost_price: data.COSTPRICE * EURO, // netto
     //, special_price: 
-    , tax_class_id: 5 // 5 = Umsatzsteuerpfichtige Güter 19%
-    , tier_price: tier_price
-    , delivery_time: "2-3"
+    tax_class_id: 5, // 5 = Umsatzsteuerpfichtige Güter 19%
+    tier_price: tier_price,
+    delivery_time: "2-3"
   };
 
   if (category_ids)
@@ -460,7 +460,7 @@ function get_heritage_data_in_parts(overwrite, cb) {
         import_heritage_data_in_parts(cb);
       }
     });
-  } else {
+  } else { 
     console.log("heritage_data already loaded!");
     // Daten sind bereits geladen
     cb(heritage_data_part);
