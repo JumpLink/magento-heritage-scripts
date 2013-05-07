@@ -24,7 +24,7 @@ var argv = require('optimist')
  * magentobug: magento sets all attributes wit a defaultvalue to the defaultvalue: https://plus.google.com/111468575764025343400/posts/BvtYDPyoDw6
  * WORKAROUND for the magentobug: forward the attrbutes e.g. manufacturer
  */
-var stock_csv_file = '"sku","_type","_attribute_set","_store","stock_vwheritage_availabilitymessagecode","stock_vwheritage_dueweeks","stock_vwheritage_qty","stock_strichweg_qty","qty","is_in_stock","vwheritage_price_pound","manufacturer", "special_order"\r\n';
+var stock_csv_file = '"sku","_type","_attribute_set","_store","stock_vwheritage_availabilitymessagecode","stock_vwheritage_dueweeks","stock_vwheritage_qty","stock_strichweg_qty","qty","is_in_stock","vwheritage_price_pound","manufacturer","special_order"\r\n';
 var price_changes_csv_file = '"sku","old_price","new_price","new_price_in_pount"\r\n';
 var heritage_data;
 var heritage_skus_set;
@@ -164,7 +164,7 @@ import_heritage_data_in_parts(function() {
 			var vwheritage_price_pound = precise_round( get_price_or_null(heritage_data["COSTPRICE"][i]), 2 );
 			var manufacturer = row.manufacturer;
 			//var special_order = row.special_order;
-			var special_order = heritage_data["SPECIALORDER"][i] == 'y' ? true : false;
+			var special_order = heritage_data["SPECIALORDER"][i] == 'y' ? 'yes' : 'no';
 			var new_line = '"'+sku+'","'+_type+'","'+_attribute_set+'","'+_store+'","'+stock_vwheritage_availabilitymessagecode+'","'+stock_vwheritage_dueweeks+'","'+stock_vwheritage_qty+'","'+stock_strichweg_qty+'","'+qty+'","'+is_in_stock+'","'+vwheritage_price_pound+'","'+manufacturer+'","'+special_order+'"\r\n';
 			stock_csv_file += new_line;
 
