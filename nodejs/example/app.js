@@ -8,7 +8,7 @@ var magento = require('magento')(config.magento);
 //   console.log(result);
 // });
 
-heritage.auto.catalog.product.info("025-100-022/JV", function(data) {
+heritage.auto.catalog.product.info("AC4065", function(data) {
   console.log(data);
 });
 
