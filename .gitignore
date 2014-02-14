@@ -7,7 +7,7 @@ lib-cov
 *.pid
 *.gz
 *.sublime*
-*.json
+
 
 pids
 logs
@@ -15,6 +15,7 @@ results
 config
 test.txt
 core
+config.json
 
 npm-debug.log
 fetch/

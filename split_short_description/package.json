@@ -1,0 +1,15 @@
+{
+  "name": "german_translation_heritage",
+  "version": "0.0.0",
+  "main": "german_translation_heritage.js",
+  "dependencies": {
+    "htmlparser2": "~3.4.0",
+    "async": "~0.2.10"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pascal Garber <pascal@jumplink.eu>",
+  "license": "MIT"
+}
