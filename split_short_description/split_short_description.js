@@ -74,7 +74,9 @@ var getDatasOfDom = function (dom) {
 
         if(typeof dom.data !== 'undefined') {
             console.log("data found");
-            datas.push(dom.data);
+            dom.data = dom.data.replace("\r", "").replace("\n", "");
+            if(dom.data.length > 0)
+                datas.push(dom.data);
             console.log(datas);
         }
     }
