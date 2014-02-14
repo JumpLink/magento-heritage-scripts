@@ -2,9 +2,7 @@ var async = require('async');
 var htmlparser = require("htmlparser2"); // https://github.com/fb55/htmlparser2
 var util = require("util");
 
-var config = require("config.json");
-
-var config.max_products = 3;
+var config = require("./config.json");
 
 var getProductList = function (callback) {
 
