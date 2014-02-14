@@ -27,6 +27,7 @@ simplesets/
 vala/magento-heritage-scripts
 vala/*.c
 vala/src/dependencies
+node_modules
 
 fetch
 npm-debug.log

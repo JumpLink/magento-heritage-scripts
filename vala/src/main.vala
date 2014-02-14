@@ -320,29 +320,37 @@ public class MagentoHeritageSync : GLib.Object {
 /*
  * Ändert ein Attribute in allen Produkten
  */
-	public void change_all_attribiutes_xmlrpc(string name, int val) {
+	public void change_all_attribiutes_xmlrpc(string storeView, string name, string val) {
 		
 		magento_skus = magento_api.catalog_product_list_all_skus ();
 
 		GLib.HashTable<string,Value?> productData = Soup.value_hash_new ();
-		productData.insert ( name, (int) val ) ;
+		productData.insert ( name, (string) val ) ;
 
-		string storeView = "shop_de";
 		string identifierType = "sku";
 
 		foreach (string sku in magento_skus) {
 			magento_api.catalog_product_update (sku, productData, storeView, identifierType);
-			print ("updated "+name+"on "+sku+"\n");
+			print ("updated "+name+" on "+sku+"\n");
 		}
 	}
 
 	public static int main (string[] args) {
+		// Output the number of arguments
+		print ("%d command line argument(s):\n", args.length);
+
+		// Enumerate all command line arguments
+		foreach (string arg in args) {
+			print ("%s\n", arg);
+		}
 		MagentoHeritageSync app = new MagentoHeritageSync ();
+		app.change_all_attribiutes_xmlrpc ("shop_en", "tax_class_id", "1");
+		
 		// app.read_and_transform_magento_csv ("./test.csv");
 		// app.start_dbus ();
 		//app.load_data ();
 		//app.import_each_heritage_quantity_to_magento_via_dbus ();
-		app.change_all_attribiutes_xmlrpc ("tax_class_id", 1);
+		
 		//app.print_data ();
 		// Csv.Loader csv = new Csv.Loader();
 		// csv.read ("./test.csv");
