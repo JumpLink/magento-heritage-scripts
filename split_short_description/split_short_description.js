@@ -1,8 +1,13 @@
+var config = require("./config.json");
+
 var async = require('async');
 var htmlparser = require("htmlparser2"); // https://github.com/fb55/htmlparser2
 var util = require("util");
 
-var config = require("./config.json");
+var nodemailer = require("nodemailer");                     // https://github.com/andris9/Nodemailer
+var smtpTransport = nodemailer.createTransport("SMTP",config.nodemailer);
+
+
 
 var getProductList = function (callback) {
 
@@ -57,7 +62,7 @@ var getProductInfo = function (item, callback) {
 }
 
 var getDatasOfDom = function (dom) {
-    console.log("getDatasOfDom");
+    //console.log("getDatasOfDom");
     var datas = new Array();
     // if dom is array
     if( Object.prototype.toString.call( dom ) === '[object Array]' ) {
@@ -73,11 +78,11 @@ var getDatasOfDom = function (dom) {
         }
 
         if(typeof dom.data !== 'undefined') {
-            console.log("data found");
+            //console.log("data found");
             dom.data = dom.data.replace("\r", "").replace("\n", "");
             if(dom.data.length > 0)
                 datas.push(dom.data);
-            console.log(datas);
+            //console.log(datas);
         }
     }
 
@@ -95,13 +100,13 @@ var extractFromShortDescription = function (item) {
     // console.log(util.inspect(handler.dom, showHidden=false, depth=4, colorize=true));
     // console.log("===========");
     var datas = getDatasOfDom(handler.dom);
-    console.log(util.inspect(datas, showHidden=false, depth=4, colorize=true));
-    return handler.dom;
+    
+    return datas;
 }
 
 
 var transformProductInfo = function (item, callback) {
-    extractFromShortDescription(item);
+    
 
     var transformed = {
         id:  item.id
@@ -113,6 +118,7 @@ var transformProductInfo = function (item, callback) {
         , metrics: item.metrics                     // Maße
         , inst_position: item.inst_position         // Einbauposition / Einbaulage
         , fittinginfo: item.fittinginfo             // Einbauhinweis / Montagehinweis
+        , test : extractFromShortDescription(item)
     }
 
     callback(null, transformed);
@@ -127,7 +133,7 @@ var isActive = function (item, callback)  {
     callback(true)
 }
 
-var splitShortDescription = function () {
+var splitShortDescription = function (callback) {
     async.waterfall([
         getProductList,
         function getEachProductInfo(items, callback) {
@@ -137,12 +143,15 @@ var splitShortDescription = function () {
             async.filterSeries(items, isActive, function(results){callback(null, results)});
         },
         function transformEach(items, callback) {
-            async.mapSeries(items, transformProductInfo, function(results){callback(null, results)});
+            async.mapSeries(items, transformProductInfo, callback);
         }
     ], function (err, results) {
-       console.log(results); 
+       callback(null, results); 
     });
 }
 
 
-splitShortDescription();
+splitShortDescription( function (error, results) {
+    console.log(util.inspect(error, showHidden=false, depth=4, colorize=true));
+    console.log(util.inspect(results, showHidden=false, depth=4, colorize=true));
+});
