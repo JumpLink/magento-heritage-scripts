@@ -4,10 +4,6 @@ var async = require('async');
 var htmlparser = require("htmlparser2"); // https://github.com/fb55/htmlparser2
 var util = require("util");
 
-var nodemailer = require("nodemailer");                     // https://github.com/andris9/Nodemailer
-var smtpTransport = nodemailer.createTransport("SMTP",config.nodemailer);
-
-
 
 var getProductList = function (callback) {
 
@@ -151,7 +147,38 @@ var splitShortDescription = function (callback) {
 }
 
 
+var sendMail = function (jsonObject) {
+
+    var nodemailer = require("nodemailer");                     // https://github.com/andris9/Nodemailer
+    var mailTransport = nodemailer.createTransport(config.nodemailer.transport, config.nodemailer);
+
+    var mailOptions = {
+        from: "Bugwelder Sync <admin@bugwelder.com>", // sender address
+        to: "pascal@bugwelder.com", // list of receivers
+        subject: "Bugwelder German Sync", // Subject line
+        attachments: [
+            {   // utf-8 string as an attachment
+                fileName: "bugwelder-german.json",
+                contents:  JSON.stringify(jsonObject, null, 2)
+            }
+        ]
+    }
+
+    mailTransport.sendMail(mailOptions, function(error, response){
+        if(error){
+            console.log(error);
+        }else{
+            console.log("Message sent: " + response.message);
+        }
+
+        // if you don't want to use this transport object anymore, uncomment following line
+        mailTransport.close(); // shut down the connection pool, no more messages
+    });
+
+}
+
 splitShortDescription( function (error, results) {
-    console.log(util.inspect(error, showHidden=false, depth=4, colorize=true));
+    console.log(util.inspect(error, showHidden=false, depth=4, colorize=false));
     console.log(util.inspect(results, showHidden=false, depth=4, colorize=true));
+    sendMail(results);
 });
