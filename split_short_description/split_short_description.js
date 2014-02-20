@@ -229,25 +229,25 @@ var transformProductInfo = function (item, callback) {
 
 
     // if no array, make array
-    if (!isArray)
+    if (!isArray(transformed.unknown))
         transformed.unknown =[transformed.unknown];
 
-    if (!isArray)
+    if (!isArray(transformed.quality))
         transformed.quality = [transformed.quality];
 
-    if (!isArray)
+    if (!isArray(transformed.applications))
         transformed.applications = [transformed.applications];
 
-    if (!isArray)
+    if (!isArray(transformed.metrics))
         transformed.metrics = [transformed.metrics];
 
-    if (!isArray)
+    if (!isArray(transformed.inst_position))
         transformed.inst_position = [transformed.inst_position];
 
-    if (!isArray)
+    if (!isArray(transformed.fittinginfo))
         transformed.fittinginfo = [transformed.fittinginfo];
 
-    if (!isArray)
+    if (!isArray(transformed.technical_data))
         transformed.technical_data = [transformed.technical_data];
 
     callback(null, transformed);
