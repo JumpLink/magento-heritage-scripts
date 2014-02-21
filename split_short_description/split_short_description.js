@@ -159,7 +159,7 @@ var isDefined = function(value) {
 }
 
 var isArray = function (value) {
-    return Object.prototype.value.call( someVar ) === '[object Array]';
+    return Object.prototype.value.call( value ) === '[object Array]';
 }
 
 var transformProductInfo = function (item, callback) {
