@@ -5,7 +5,8 @@
   "dependencies": {
     "htmlparser2": "~3.4.0",
     "async": "~0.2.10",
-    "nodemailer": "^0.6.0"
+    "nodemailer": "^0.6.0",
+    "ent": "^0.1.0"
   },
   "devDependencies": {},
   "scripts": {

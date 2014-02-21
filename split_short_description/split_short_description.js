@@ -3,7 +3,28 @@ var config = require("./config.json");
 var async = require('async');
 var htmlparser = require("htmlparser2"); // https://github.com/fb55/htmlparser2
 var util = require("util");
+var ent = require('ent'); // https://github.com/substack/node-ent
 
+
+var isDefined = function(value) {
+    return value !== null && typeof(value) !== 'undefined' && value !== 'undefined';
+}
+
+var isEmptyChar = function(value) {
+    return !isDefined(value) || value == "" || value == " " || value == " " || value == '' || value == ' ' || value == '\t' || value == '\r' || value == '\n' || value == '\x0b';
+}
+
+var isEmpty = function(value) {
+    return !isDefined(value) || value == "<br>" || !isDefined(value.length) || value.length <= 1 || isEmptyChar(value);
+}
+
+var isArray = function (value) {
+    return Object.prototype.toString.call( value ) === '[object Array]';
+}
+
+var contains = function (str, substring) {
+    return str.indexOf(substring) != -1;
+}
 
 var getProductList = function (callback) {
 
@@ -57,25 +78,40 @@ var getProductInfo = function (item, callback) {
     magento_shell_api.start();
 }
 
-var replaceUmlaute = function (stringValue) {
-    return stringValue.replace("&acute;", "'").replace("&auml;", "ä").replace("&uuml;", "ü").replace("&ouml;", "ö").replace("&szlig;", "ß").replace("&amp;", "&");
+// var replaceUmlaute = function (stringValue) {
+//     return stringValue.replace("&acute;", "'").replace("-&acute;", "-'").replace("&#39;;", "'").replace("&auml;", "ä").replace("&uuml;", "ü").replace("&ouml;", "ö").replace("&szlig;", "ß").replace("&amp;", "&");
+// }
+
+var removeWhitespaces = function (stringValue) {
+
+    var regex = new RegExp("\r|\n|  ", 'g');
+
+    //var result = stringValue.replace("\r", "").replace("\n", "").replace("  ", " ");
+    var result = stringValue.replace(regex, "");
+    
+
+    // remove first space
+    if(!isEmpty(result) && isEmptyChar(result.charAt(0)))
+        result = result.slice(1);
+
+    // remove last space
+    if(!isEmpty(result) && isEmptyChar(result.charAt(result.length-1)))
+        result = result.substring(0, result.length-1);
+
+    return result;
 }
 
-var replaceWhitespaces = function (stringValue) {
-    return stringValue.replace("\r", "").replace("\n", "").replace("&nbsp;", "");
-}
+// var replaceHtml = function (stringValue) {
+//     return stringValue.replace("<br>", "");
+// }
 
-var replaceHtml = function (stringValue) {
-    return stringValue.replace("<br>", "");
-}
+// var replaceUmlauteWhitespaces = function (stringValue) {
+//     return removeWhitespaces(replaceUmlaute(stringValue));
+// }
 
-var replaceUmlauteWhitespaces = function (stringValue) {
-    return replaceWhitespaces(replaceUmlaute(stringValue));
-}
-
-var replaceUmlauteWhitespacesHtml = function (stringValue) {
-    return replaceHtml(replaceUmlauteWhitespaces(stringValue));
-}
+// var replaceUmlauteWhitespacesHtml = function (stringValue) {
+//     return replaceHtml(ent.decode(stringValue));
+// }
 
 var getDatasOfDom = function (dom) {
     //console.log("getDatasOfDom");
@@ -95,13 +131,14 @@ var getDatasOfDom = function (dom) {
 
         if(isDefined(dom.data)) {
             //console.log("data found");
-            dom.data = replaceUmlauteWhitespaces(dom.data);
+            dom.data = ent.decode(dom.data);
+            dom.data = removeWhitespaces(dom.data);    
 
-            if(dom.data.charAt(0) == " ")
-                dom.data = dom.data.slice(1);
-            if(dom.data.length > 0)
+            console.log(dom.data+";");  
+
+            if(!isEmpty(dom.data)) {
                 datas.push(dom.data);
-            //console.log(datas);
+            }
         }
     }
 
@@ -110,7 +147,7 @@ var getDatasOfDom = function (dom) {
 
 
 
-var seperateHtmlDataArray = function (datas) {
+var seperateShortDescriptionHtmlDataArray = function (datas) {
 
     var currentData = "unknown"; // unknown | quality | applications | metrics | inst_position | fittinginfo | technical_data
 
@@ -122,28 +159,79 @@ var seperateHtmlDataArray = function (datas) {
         , inst_position: []         // Einbauposition / Einbaulage
         , fittinginfo: []           // Einbauhinweis / Montagehinweis
         , technical_data: []        // Technische Daten
+        , short_description: datas
     }
 
     for (var i = 0; i < datas.length; i++) {
 
         switch(datas[i].toLowerCase()) {
-            case 'passend f&uuml;r:':
             case 'passend für:':
                 currentData = "applications";
                 break;
-            case 'ma&szlig;e:':
             case 'maße:':
                 currentData = "metrics";
+                break;
             case 'einbaulage:':
             case 'einbauposition':
                 currentData = "inst_position";
+                break;
             case 'technische daten:':
                 currentData = "technical_data";
+                break;
+            case 'einbauhinweis:':
+            case 'montagehinweis:':
+                currentData = "fittinginfo";
+                break;
+            case 'qualität:':
+                currentData = "quality";
+                break;
             default:
                 result[currentData].push(datas[i]);
-
+                break;
         }
         
+    };
+
+    return result;
+}
+
+var seperateDescriptionHtmlDataArray = function (datas) {
+
+    var currentData = "unknown"; // unknown | quality | applications | metrics | inst_position | fittinginfo | technical_data
+
+    var result = {
+        quality: ""
+        , description: datas
+    }
+
+    for (var i = 0; i < datas.length; i++) {
+
+        var currentString = datas[i].toLowerCase();
+
+        if(contains(currentString, 'beste qualität')) {
+            result.quality = "Beste Qualität";
+        } else if(contains(currentString, 'originalqualität')) {
+            result.quality = "Originalqualität";
+        } else if(contains(currentString, 'handgefertigte topqualität')) {
+             result.quality = 'Handgefertigte Topqualität';
+        } else if(contains(currentString, 'zubehörqualität') || contains(currentString, 'zubehör qualität')) {
+            result.quality = 'Zubehörqualität';
+        } else if(contains(currentString, 'erstausrüster-qualität') || contains(currentString, 'erstausrüster qualität')  || contains(currentString, 'erstausrüsterqualität')) {
+            result.quality = 'Erstausrüster-Qualität';
+        } else if(contains(currentString, 'oe-qualität') || contains(currentString, 'oe qualität')) {
+            result.quality = 'OE Qualität';
+        } else if(contains(currentString, 'deutsche qualität')) {
+            result.quality = 'Deutsche Qualität';
+        } else if(contains(currentString, 'top qualität')) {
+            result.quality = 'Top Qualität';
+        } else if(contains(currentString, 'gute qualität')) {
+            result.quality = 'Gute Qualität';
+        }
+
+        if(contains(currentString, 'hergestellt in deutschland')) {
+            result.quality += " Hergestellt in Deutschland";
+        }
+
     };
 
     return result;
@@ -155,32 +243,34 @@ var extractFromShortDescription = function (item) {
 
     var handler = new htmlparser.DomHandler();
     var parser = new htmlparser.Parser(handler);
+
     parser.parseComplete(item.short_description);
     // console.log("===========");
     // console.log(util.inspect(handler.dom, showHidden=false, depth=4, colorize=true));
     // console.log("===========");
     var datas = getDatasOfDom(handler.dom);
-    
-    return seperateHtmlDataArray(datas);
+
+    return seperateShortDescriptionHtmlDataArray(datas);
 }
 
-var isDefined = function(value) {
-    return value !== null && typeof(value) !== 'undefined' && value !== 'undefined';
-}
-
-var isEmpty = function(value) {
-    return value === null || value === "";
-}
-
-
-var isArray = function (value) {
-    return Object.prototype.toString.call( value ) === '[object Array]';
+var extractFromDescription = function (item) {
+    var handler = new htmlparser.DomHandler();
+    var parser = new htmlparser.Parser(handler);
+    parser.parseComplete(item.description);
+    var datas = getDatasOfDom(handler.dom);
+   
+    return seperateDescriptionHtmlDataArray(datas);
 }
 
 var transformProductInfo = function (item, callback) {
     
 
     var extracted = extractFromShortDescription(item);
+
+    var extractedDescription = extractFromDescription(item);
+
+    extracted.description = extractedDescription.description;
+    extracted.quality = extractedDescription.quality;
 
     var transformed = {
         id:  item.id
@@ -194,29 +284,41 @@ var transformProductInfo = function (item, callback) {
         , fittinginfo: item.fittinginfo
         , technical_data: item.technical_data
         , unknown: item.unknown
+        , short_description: item.short_description
+        , description: item.description
     }
 
     // remove html umlaute usw evtl wieder entfernen
     if(isDefined(transformed.quality))
-        transformed.quality = replaceUmlauteWhitespacesHtml(transformed.quality);
+        transformed.quality = removeWhitespaces(ent.decode(transformed.quality));
     
     if(isDefined(transformed.applications))
-        transformed.applications = replaceUmlauteWhitespacesHtml(transformed.applications);           // Passend für
+        transformed.applications = removeWhitespaces(ent.decode(transformed.applications));           // Passend für
     
     if(isDefined(transformed.metrics))
-        transformed.metrics = replaceUmlauteWhitespacesHtml(transformed.metrics);                     // Maße
+        transformed.metrics = removeWhitespaces(ent.decode(transformed.metrics));                     // Maße
     
     if(isDefined(transformed.inst_position))
-        transformed.inst_position = replaceUmlauteWhitespacesHtml(transformed.inst_position);         // Einbauposition / Einbaulage
+        transformed.inst_position = removeWhitespaces(ent.decode(transformed.inst_position));         // Einbauposition / Einbaulage
     
     if(isDefined(transformed.fittinginfo))
-        transformed.fittinginfo = replaceUmlauteWhitespacesHtml(transformed.fittinginfo);             // Einbauhinweis / Montagehinweis
+        transformed.fittinginfo = removeWhitespaces(ent.decode(transformed.fittinginfo));             // Einbauhinweis / Montagehinweis
     
     if(isDefined(transformed.technical_data))
-        transformed.technical_data = replaceUmlauteWhitespacesHtml(transformed.technical_data);       // Technische Daten
+        transformed.technical_data = removeWhitespaces(ent.decode(transformed.technical_data));       // Technische Daten
     
     if(isDefined(transformed.unknown))
-        transformed.unknown = replaceUmlauteWhitespacesHtml(transformed.unknown);                                                                              // unbekannter Wert (Backup)
+        transformed.unknown = removeWhitespaces(ent.decode(transformed.unknown));                                                                              // unbekannter Wert (Backup)
+
+    if(isDefined(transformed.short_description)) {
+        transformed.short_description = removeWhitespaces(ent.decode(transformed.short_description));
+        transformed.short_description_html = transformed.short_description;
+    }
+
+    if(isDefined(transformed.description)) {
+        transformed.description = removeWhitespaces(ent.decode(transformed.description));
+        transformed.description_html = transformed.description;
+    }
 
 
     // replace with values from short description
@@ -241,6 +343,12 @@ var transformProductInfo = function (item, callback) {
     if(extracted.technical_data.length > 0)
         transformed.technical_data = extracted.technical_data;
 
+    if(extracted.short_description.length > 0)
+        transformed.short_description = extracted.short_description;
+
+    if(extracted.description.length > 0)
+        transformed.description = extracted.description;
+
 
     if (isEmpty(transformed.unknown))
         delete transformed.unknown;
@@ -262,6 +370,13 @@ var transformProductInfo = function (item, callback) {
 
     if (isEmpty(transformed.technical_data))
         delete transformed.technical_data;
+
+    if (isEmpty(transformed.short_description))
+        delete transformed.short_description;
+
+    if (isEmpty(transformed.description))
+        delete transformed.description;
+
 
 
     // if no array, make array
@@ -286,12 +401,18 @@ var transformProductInfo = function (item, callback) {
     if (isDefined(transformed.technical_data) && !isArray(transformed.technical_data))
         transformed.technical_data = [transformed.technical_data];
 
+    if (isDefined(transformed.short_description) && !isArray(transformed.short_description))
+        transformed.short_description = [transformed.short_description];
+
+    if (isDefined(transformed.description) && !isArray(transformed.description))
+        transformed.description = [transformed.description];
+
     callback(null, transformed);
 }
 
 var isActive = function (item, callback)  {
 
-    // filter all products they are not activated
+    // filter all products they are not activated (unactivated products are not translated)
     callback(item.status === 'activated');
 
     // no filter
