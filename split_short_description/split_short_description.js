@@ -83,7 +83,6 @@ var getDatasOfDom = function (dom) {
 
         if(isDefined(dom.data)) {
             //console.log("data found");
-            if
             dom.data = replaceUmlaute(replaceWhitespaces(dom.data));
 
             if(dom.data.charAt(0) == " ")
