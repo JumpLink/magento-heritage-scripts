@@ -4,6 +4,11 @@ var async = require('async');
 var htmlparser = require("htmlparser2"); // https://github.com/fb55/htmlparser2
 var util = require("util");
 var ent = require('ent'); // https://github.com/substack/node-ent
+var moment = require('moment'); // http://momentjs.com/
+var easyXML = require('easyxml'); // https://github.com/QuickenLoans/node-easyxml
+var json2csv = require('json2csv');
+
+easyXML.configure({ singularizeChildren: true, underscoreAttributes: true, manifest: true, indent: 2 });
 
 
 var isDefined = function(value) {
@@ -14,13 +19,18 @@ var isEmptyChar = function(value) {
     return !isDefined(value) || value == "" || value == " " || value == " " || value == '' || value == ' ' || value == '\t' || value == '\r' || value == '\n' || value == '\x0b';
 }
 
-var isEmpty = function(value) {
-    return !isDefined(value) || value == "<br>" || !isDefined(value.length) || value.length <= 1 || isEmptyChar(value);
-}
-
 var isArray = function (value) {
     return Object.prototype.toString.call( value ) === '[object Array]';
 }
+
+var isEmpty = function(value) {
+    if(isArray(value)) {
+        return !isDefined(value.length) || value.length <= 0;
+    } else {
+        return !isDefined(value) || value == "<br>" || !isDefined(value.length) || value.length <= 1 || isEmptyChar(value);
+    }
+}
+
 
 var contains = function (str, substring) {
     return str.indexOf(substring) != -1;
@@ -407,6 +417,10 @@ var transformProductInfo = function (item, callback) {
     if (isDefined(transformed.description) && !isArray(transformed.description))
         transformed.description = [transformed.description];
 
+    // WORKAROUND remove descripton
+    delete transformed.description;
+    delete transformed.description_html;
+
     callback(null, transformed);
 }
 
@@ -442,30 +456,38 @@ var sendMail = function (jsonObject) {
     var nodemailer = require("nodemailer");                     // https://github.com/andris9/Nodemailer
     var mailTransport = nodemailer.createTransport(config.nodemailer.transport, config.nodemailer);
 
-    var mailOptions = {
-        from: "Bugwelder Sync <admin@bugwelder.com>", // sender address
-        to: "pascal@bugwelder.com", // list of receivers
-        subject: "Bugwelder German Sync", // Subject line
-        // text: util.inspect(jsonObject, showHidden=true, depth=2, colorize=false),
-        attachments: [
-            {   // utf-8 string as an attachment
-                fileName: "bugwelder-german.json",
-                contents:  JSON.stringify(jsonObject, null, 2)
-            }
-        ]
-    }
+    var mailOptions = config.mailoptions;
+    var fileName = "bugwelder-german-"+moment().format();
 
-    mailTransport.sendMail(mailOptions, function(error, response){
-        if(error){
-            console.log(error);
-        }else{
-            console.log("Message sent: " + response.message);
+    mailOptions.subject += " "+moment().format('MMMM Do YYYY, h:mm:ss a'); // Subject line
+    mailOptions.attachments = [
+        {   // utf-8 string as an attachment
+            fileName: fileName+".json",
+            contents:  JSON.stringify(jsonObject, null, 2)
+        },
+        {   // utf-8 string as an attachment
+            fileName: fileName+".xml",
+            contents: easyXML.render(jsonObject)
+        }
+    ];
+
+    json2csv({data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'short_description', 'short_description_html' ]}, function(err, csv) {
+        if (err) console.log(err);
+        else {
+            mailOptions.attachments.push({fileName: fileName+".csv", contents: csv})
         }
 
-        // if you don't want to use this transport object anymore, uncomment following line
-        mailTransport.close(); // shut down the connection pool, no more messages
-    });
+        mailTransport.sendMail(mailOptions, function(error, response){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Message sent: " + response.message);
+            }
 
+            // if you don't want to use this transport object anymore, uncomment following line
+            mailTransport.close(); // shut down the connection pool, no more messages
+        });
+    });
 }
 
 splitShortDescription( function (error, results) {
