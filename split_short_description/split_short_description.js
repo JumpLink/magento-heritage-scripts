@@ -86,7 +86,7 @@ var getDatasOfDom = function (dom) {
             dom.data = replaceUmlaute(replaceWhitespaces(dom.data));
 
             if(dom.data.charAt(0) == " ")
-                dom.data = str.slice(1);
+                dom.data = dom.data.slice(1);
             if(dom.data.length > 0)
                 datas.push(dom.data);
             //console.log(datas);
