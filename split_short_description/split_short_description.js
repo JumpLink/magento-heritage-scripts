@@ -65,6 +65,18 @@ var replaceWhitespaces = function (stringValue) {
     return stringValue.replace("\r", "").replace("\n", "").replace("&nbsp;", "");
 }
 
+var replaceHtml = function (stringValue) {
+    return stringValue.replace("<br>", "");
+}
+
+var replaceUmlauteWhitespaces = function (stringValue) {
+    return replaceWhitespaces(replaceUmlaute(stringValue));
+}
+
+var replaceUmlauteWhitespacesHtml = function (stringValue) {
+    return replaceHtml(replaceUmlauteWhitespaces(stringValue));
+}
+
 var getDatasOfDom = function (dom) {
     //console.log("getDatasOfDom");
     var datas = new Array();
@@ -83,7 +95,7 @@ var getDatasOfDom = function (dom) {
 
         if(isDefined(dom.data)) {
             //console.log("data found");
-            dom.data = replaceUmlaute(replaceWhitespaces(dom.data));
+            dom.data = replaceUmlauteWhitespaces(dom.data);
 
             if(dom.data.charAt(0) == " ")
                 dom.data = dom.data.slice(1);
@@ -111,8 +123,6 @@ var seperateHtmlDataArray = function (datas) {
         , fittinginfo: []           // Einbauhinweis / Montagehinweis
         , technical_data: []        // Technische Daten
     }
-
-    
 
     for (var i = 0; i < datas.length; i++) {
 
@@ -158,6 +168,11 @@ var isDefined = function(value) {
     return value !== null && typeof(value) !== 'undefined' && value !== 'undefined';
 }
 
+var isEmpty = function(value) {
+    return value === null || value === "";
+}
+
+
 var isArray = function (value) {
     return Object.prototype.toString.call( value ) === '[object Array]';
 }
@@ -183,25 +198,25 @@ var transformProductInfo = function (item, callback) {
 
     // remove html umlaute usw evtl wieder entfernen
     if(isDefined(transformed.quality))
-        transformed.quality = replaceUmlaute(replaceWhitespaces(transformed.quality)).replace("<br>", "");
+        transformed.quality = replaceUmlauteWhitespacesHtml(transformed.quality);
     
     if(isDefined(transformed.applications))
-        transformed.applications = replaceUmlaute(replaceWhitespaces(transformed.applications)).replace("<br>", "");           // Passend für
+        transformed.applications = replaceUmlauteWhitespacesHtml(transformed.applications);           // Passend für
     
     if(isDefined(transformed.metrics))
-        transformed.metrics = replaceUmlaute(replaceWhitespaces(transformed.metrics)).replace("<br>", "");                     // Maße
+        transformed.metrics = replaceUmlauteWhitespacesHtml(transformed.metrics);                     // Maße
     
     if(isDefined(transformed.inst_position))
-        transformed.inst_position = replaceUmlaute(replaceWhitespaces(transformed.inst_position)).replace("<br>", "");         // Einbauposition / Einbaulage
+        transformed.inst_position = replaceUmlauteWhitespacesHtml(transformed.inst_position);         // Einbauposition / Einbaulage
     
     if(isDefined(transformed.fittinginfo))
-        transformed.fittinginfo = replaceUmlaute(replaceWhitespaces(transformed.fittinginfo)).replace("<br>", "");             // Einbauhinweis / Montagehinweis
+        transformed.fittinginfo = replaceUmlauteWhitespacesHtml(transformed.fittinginfo);             // Einbauhinweis / Montagehinweis
     
     if(isDefined(transformed.technical_data))
-        transformed.technical_data = replaceUmlaute(replaceWhitespaces(transformed.technical_data)).replace("<br>", "");       // Technische Daten
+        transformed.technical_data = replaceUmlauteWhitespacesHtml(transformed.technical_data);       // Technische Daten
     
     if(isDefined(transformed.unknown))
-        transformed.unknown = transformed.unknown                                                                              // unbekannter Wert (Backup)
+        transformed.unknown = replaceUmlauteWhitespacesHtml(transformed.unknown);                                                                              // unbekannter Wert (Backup)
 
 
     // replace with values from short description
@@ -227,26 +242,48 @@ var transformProductInfo = function (item, callback) {
         transformed.technical_data = extracted.technical_data;
 
 
+    if (isEmpty(transformed.unknown))
+        delete transformed.unknown;
+
+    if (isEmpty(transformed.quality))
+        delete transformed.quality;
+
+    if (isEmpty(transformed.applications))
+        delete transformed.applications;
+
+    if (isEmpty(transformed.metrics))
+        delete transformed.metrics;
+
+    if (isEmpty(transformed.inst_position))
+        delete transformed.inst_position;
+
+    if (isEmpty(transformed.fittinginfo))
+        delete transformed.fittinginfo;
+
+    if (isEmpty(transformed.technical_data))
+        delete transformed.technical_data;
+
+
     // if no array, make array
-    if (!isArray(transformed.unknown))
+    if (isDefined(transformed.unknown) && !isArray(transformed.unknown))
         transformed.unknown =[transformed.unknown];
 
-    if (!isArray(transformed.quality))
+    if (isDefined(transformed.quality) && !isArray(transformed.quality))
         transformed.quality = [transformed.quality];
 
-    if (!isArray(transformed.applications))
+    if (isDefined(transformed.applications) && !isArray(transformed.applications))
         transformed.applications = [transformed.applications];
 
-    if (!isArray(transformed.metrics))
+    if (isDefined(transformed.metrics) && !isArray(transformed.metrics))
         transformed.metrics = [transformed.metrics];
 
-    if (!isArray(transformed.inst_position))
+    if (isDefined(transformed.inst_position) && !isArray(transformed.inst_position))
         transformed.inst_position = [transformed.inst_position];
 
-    if (!isArray(transformed.fittinginfo))
+    if (isDefined(transformed.fittinginfo) && !isArray(transformed.fittinginfo))
         transformed.fittinginfo = [transformed.fittinginfo];
 
-    if (!isArray(transformed.technical_data))
+    if (isDefined(transformed.technical_data) && !isArray(transformed.technical_data))
         transformed.technical_data = [transformed.technical_data];
 
     callback(null, transformed);
