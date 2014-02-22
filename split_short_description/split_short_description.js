@@ -8,7 +8,7 @@ var moment = require('moment'); // http://momentjs.com/
 var easyXML = require('easyxml'); // https://github.com/QuickenLoans/node-easyxml
 var json2csv = require('json2csv'); // https://github.com/zeMirco/json2csv
 
-easyXML.configure({ singularizeChildren: true, underscoreAttributes: true, manifest: true, indent: 2 });
+easyXML.configure({ rootElement: 'bugwelder-german-products', singularizeChildren: true, underscoreAttributes: true, manifest: true, indent: 2 });
 
 
 var isDefined = function(value) {
@@ -88,9 +88,10 @@ var getProductInfo = function (item, callback) {
     magento_shell_api.start();
 }
 
-// var replaceUmlaute = function (stringValue) {
-//     return stringValue.replace("&acute;", "'").replace("-&acute;", "-'").replace("&#39;;", "'").replace("&auml;", "ä").replace("&uuml;", "ü").replace("&ouml;", "ö").replace("&szlig;", "ß").replace("&amp;", "&");
-// }
+var fixApostrophs = function (stringValue) {
+    var regex = new RegExp("´", 'g');
+    return stringValue.replace(regex, "'");
+}
 
 var removeWhitespaces = function (stringValue) {
 
@@ -111,18 +112,6 @@ var removeWhitespaces = function (stringValue) {
     return result;
 }
 
-// var replaceHtml = function (stringValue) {
-//     return stringValue.replace("<br>", "");
-// }
-
-// var replaceUmlauteWhitespaces = function (stringValue) {
-//     return removeWhitespaces(replaceUmlaute(stringValue));
-// }
-
-// var replaceUmlauteWhitespacesHtml = function (stringValue) {
-//     return replaceHtml(ent.decode(stringValue));
-// }
-
 var getDatasOfDom = function (dom) {
     //console.log("getDatasOfDom");
     var datas = new Array();
@@ -142,9 +131,10 @@ var getDatasOfDom = function (dom) {
         if(isDefined(dom.data)) {
             //console.log("data found");
             dom.data = ent.decode(dom.data);
-            dom.data = removeWhitespaces(dom.data);    
+            dom.data = removeWhitespaces(dom.data);
+            dom.data = fixApostrophs(dom.data);
 
-            console.log(dom.data+";");  
+            //console.log(dom.data+";");  
 
             if(!isEmpty(dom.data)) {
                 datas.push(dom.data);
@@ -255,9 +245,6 @@ var extractFromShortDescription = function (item) {
     var parser = new htmlparser.Parser(handler);
 
     parser.parseComplete(item.short_description);
-    // console.log("===========");
-    // console.log(util.inspect(handler.dom, showHidden=false, depth=4, colorize=true));
-    // console.log("===========");
     var datas = getDatasOfDom(handler.dom);
 
     return seperateShortDescriptionHtmlDataArray(datas);
@@ -266,12 +253,18 @@ var extractFromShortDescription = function (item) {
 var extractFromDescription = function (item) {
     var handler = new htmlparser.DomHandler();
     var parser = new htmlparser.Parser(handler);
-    //parser.parseComplete(item.description);
+
+    parser.parseComplete(item.description);
+    var datas = getDatasOfDom(handler.dom);
+    var result = seperateDescriptionHtmlDataArray(datas);
+
     // WORKAROUND VWHERITAGE
     parser.parseComplete(item.vwheritage_description);
     var datas = getDatasOfDom(handler.dom);
-   
-    return seperateDescriptionHtmlDataArray(datas);
+    var result2 = seperateDescriptionHtmlDataArray(datas);
+    result.description = result2.description;
+
+    return result;
 }
 
 var transformProductInfo = function (item, callback) {
@@ -296,71 +289,84 @@ var transformProductInfo = function (item, callback) {
         , fittinginfo: item.fittinginfo
         , technical_data: item.technical_data
         , unknown: item.unknown
+        //, manufacturer: item.manufacturer // FIXME fix magento api to get string of manufacturer and not id
         , short_description: item.short_description
         //, description: item.description
         , description: item.vwheritage_description // WORKAROUND VWHERITAGE
+        , scope_of_delivery: item.lieferumfang
     }
 
     // remove html umlaute usw evtl wieder entfernen
-    if(isDefined(transformed.quality))
+    if(!isArray(transformed.quality) && isDefined(transformed.quality))
         transformed.quality = removeWhitespaces(ent.decode(transformed.quality));
     
-    if(isDefined(transformed.applications))
+    if(!isArray(transformed.applications) && isDefined(transformed.applications))
         transformed.applications = removeWhitespaces(ent.decode(transformed.applications));           // Passend für
     
-    if(isDefined(transformed.metrics))
+    if(!isArray(transformed.metrics) && isDefined(transformed.metrics))
         transformed.metrics = removeWhitespaces(ent.decode(transformed.metrics));                     // Maße
     
-    if(isDefined(transformed.inst_position))
+    if(!isArray(transformed.inst_position) && isDefined(transformed.inst_position))
         transformed.inst_position = removeWhitespaces(ent.decode(transformed.inst_position));         // Einbauposition / Einbaulage
     
-    if(isDefined(transformed.fittinginfo))
+    if(!isArray(transformed.fittinginfo) && isDefined(transformed.fittinginfo))
         transformed.fittinginfo = removeWhitespaces(ent.decode(transformed.fittinginfo));             // Einbauhinweis / Montagehinweis
     
-    if(isDefined(transformed.technical_data))
+    if(!isArray(transformed.technical_data) && isDefined(transformed.technical_data))
         transformed.technical_data = removeWhitespaces(ent.decode(transformed.technical_data));       // Technische Daten
     
-    if(isDefined(transformed.unknown))
-        transformed.unknown = removeWhitespaces(ent.decode(transformed.unknown));                                                                              // unbekannter Wert (Backup)
+    if(!isArray(transformed.unknown) && isDefined(transformed.unknown))
+        transformed.unknown = removeWhitespaces(ent.decode(transformed.unknown));                     // unbekannter Wert (Backup)
 
-    if(isDefined(transformed.short_description)) {
+    // FIXME fix magento api to get string of manufacturer and not id
+    // if(!isArray(transformed.manufacturer) && isDefined(transformed.manufacturer))
+    //     transformed.manufacturer = removeWhitespaces(ent.decode(transformed.manufacturer));
+
+    if(!isArray(transformed.short_description) && isDefined(transformed.short_description)) {
         transformed.short_description = removeWhitespaces(ent.decode(transformed.short_description));
         transformed.short_description_html = transformed.short_description;
     }
 
-    if(isDefined(transformed.description)) {
+    if(!isArray(transformed.description) && isDefined(transformed.description)) {
         transformed.description = removeWhitespaces(ent.decode(transformed.description));
         transformed.description_html = transformed.description;
     }
 
+    if(!isArray(transformed.scope_of_delivery) && isDefined(transformed.scope_of_delivery))
+        transformed.scope_of_delivery = removeWhitespaces(ent.decode(transformed.scope_of_delivery));
+
 
     // replace with values from short description
-    if(extracted.unknown.length > 0)
+    if(isDefined(extracted.unknown) && extracted.unknown.length > 0)
         transformed.unknown = extracted.unknown;
 
-    if(extracted.quality.length > 0)
+    if(isDefined(extracted.quality) && extracted.quality.length > 0)
         transformed.quality = extracted.quality;
 
-    if(extracted.applications.length > 0)
+    if(isDefined(extracted.applications) && extracted.applications.length > 0)
         transformed.applications = extracted.applications;
 
-    if(extracted.metrics.length > 0)
+    if(isDefined(extracted.metrics) && extracted.metrics.length > 0)
         transformed.metrics = extracted.metrics;
 
-    if(extracted.inst_position.length > 0)
+    if(isDefined(extracted.inst_position) && extracted.inst_position.length > 0)
         transformed.inst_position = extracted.inst_position;
 
-    if(extracted.fittinginfo.length > 0)
+    if(isDefined(extracted.fittinginfo) && extracted.fittinginfo.length > 0)
         transformed.fittinginfo = extracted.fittinginfo;
 
-    if(extracted.technical_data.length > 0)
+    if(isDefined(extracted.technical_data) && extracted.technical_data.length > 0)
         transformed.technical_data = extracted.technical_data;
 
-    if(extracted.short_description.length > 0)
+    if(isDefined(extracted.short_description) && extracted.short_description.length > 0)
         transformed.short_description = extracted.short_description;
 
-    if(extracted.description.length > 0)
+    if(isDefined(extracted.description) && extracted.description.length > 0)
         transformed.description = extracted.description;
+
+    if(isDefined(extracted.scope_of_delivery) && extracted.scope_of_delivery.length > 0)
+        transformed.scope_of_delivery = extracted.scope_of_delivery;
+
 
 
     if (isEmpty(transformed.unknown))
@@ -384,11 +390,24 @@ var transformProductInfo = function (item, callback) {
     if (isEmpty(transformed.technical_data))
         delete transformed.technical_data;
 
+    // FIXME fix magento api to get string of manufacturer and not id
+    // if (isEmpty(transformed.manufacturer))
+    //     delete transformed.manufacturer;   
+
     if (isEmpty(transformed.short_description))
         delete transformed.short_description;
 
+    if (isEmpty(transformed.short_description_html))
+        delete transformed.short_description_html;
+
     if (isEmpty(transformed.description))
         delete transformed.description;
+
+    if (isEmpty(transformed.description_html))
+        delete transformed.description_html;
+
+    if (isEmpty(transformed.scope_of_delivery))
+        delete transformed.scope_of_delivery;
 
 
 
@@ -396,8 +415,8 @@ var transformProductInfo = function (item, callback) {
     if (isDefined(transformed.unknown) && !isArray(transformed.unknown))
         transformed.unknown =[transformed.unknown];
 
-    if (isDefined(transformed.quality) && !isArray(transformed.quality))
-        transformed.quality = [transformed.quality];
+    // if (isDefined(transformed.quality) && !isArray(transformed.quality))
+    //     transformed.quality = [transformed.quality];
 
     if (isDefined(transformed.applications) && !isArray(transformed.applications))
         transformed.applications = [transformed.applications];
@@ -413,6 +432,9 @@ var transformProductInfo = function (item, callback) {
 
     if (isDefined(transformed.technical_data) && !isArray(transformed.technical_data))
         transformed.technical_data = [transformed.technical_data];
+
+    // if (isDefined(transformed.manufacturer) && !isArray(transformed.manufacturer))
+    //     transformed.manufacturer = [transformed.manufacturer];
 
     if (isDefined(transformed.short_description) && !isArray(transformed.short_description))
         transformed.short_description = [transformed.short_description];
@@ -470,7 +492,7 @@ var sendMail = function (jsonObject) {
         }
     ];
 
-    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'short_description', 'short_description_html' ]}, function(err, csv) {
+    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'manufacturer', 'short_description', 'short_description_html', 'description', 'description_html', 'scope_of_delivery' ]}, function(err, csv) {
         if (err) console.log(err);
         else {
             mailOptions.attachments.push({fileName: fileName+".csv", contents: csv})
