@@ -6,7 +6,7 @@ var util = require("util");
 var ent = require('ent'); // https://github.com/substack/node-ent
 var moment = require('moment'); // http://momentjs.com/
 var easyXML = require('easyxml'); // https://github.com/QuickenLoans/node-easyxml
-var json2csv = require('json2csv');
+var json2csv = require('json2csv'); // https://github.com/zeMirco/json2csv
 
 easyXML.configure({ singularizeChildren: true, underscoreAttributes: true, manifest: true, indent: 2 });
 
@@ -266,7 +266,9 @@ var extractFromShortDescription = function (item) {
 var extractFromDescription = function (item) {
     var handler = new htmlparser.DomHandler();
     var parser = new htmlparser.Parser(handler);
-    parser.parseComplete(item.description);
+    //parser.parseComplete(item.description);
+    // WORKAROUND VWHERITAGE
+    parser.parseComplete(item.vwheritage_description);
     var datas = getDatasOfDom(handler.dom);
    
     return seperateDescriptionHtmlDataArray(datas);
@@ -295,7 +297,8 @@ var transformProductInfo = function (item, callback) {
         , technical_data: item.technical_data
         , unknown: item.unknown
         , short_description: item.short_description
-        , description: item.description
+        //, description: item.description
+        , description: item.vwheritage_description // WORKAROUND VWHERITAGE
     }
 
     // remove html umlaute usw evtl wieder entfernen
@@ -416,10 +419,6 @@ var transformProductInfo = function (item, callback) {
 
     if (isDefined(transformed.description) && !isArray(transformed.description))
         transformed.description = [transformed.description];
-
-    // WORKAROUND remove descripton
-    delete transformed.description;
-    delete transformed.description_html;
 
     callback(null, transformed);
 }
