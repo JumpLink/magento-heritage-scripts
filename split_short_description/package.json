@@ -9,7 +9,7 @@
     "ent": "^0.1.0",
     "moment": "~2.5.1",
     "easyxml": "0.0.5",
-    "json2csv": "^2.2.1"
+    "json2csv": "git://github.com/JumpLink/json2csv"
   },
   "devDependencies": {},
   "scripts": {

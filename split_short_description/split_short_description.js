@@ -470,7 +470,7 @@ var sendMail = function (jsonObject) {
         }
     ];
 
-    json2csv({data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'short_description', 'short_description_html' ]}, function(err, csv) {
+    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'short_description', 'short_description_html' ]}, function(err, csv) {
         if (err) console.log(err);
         else {
             mailOptions.attachments.push({fileName: fileName+".csv", contents: csv})
