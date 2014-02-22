@@ -159,6 +159,7 @@ var seperateShortDescriptionHtmlDataArray = function (datas) {
         , inst_position: []         // Einbauposition / Einbaulage
         , fittinginfo: []           // Einbauhinweis / Montagehinweis
         , technical_data: []        // Technische Daten
+        , scope_of_delivery: []     // Lieferumfang
         , short_description: datas
     }
 
@@ -184,6 +185,9 @@ var seperateShortDescriptionHtmlDataArray = function (datas) {
                 break;
             case 'qualität:':
                 currentData = "quality";
+                break;
+            case 'lieferumfang:':
+                currentData = "scope_of_delivery";
                 break;
             default:
                 result[currentData].push(datas[i]);
@@ -336,7 +340,7 @@ var transformProductInfo = function (item, callback) {
         transformed.scope_of_delivery = removeWhitespaces(ent.decode(transformed.scope_of_delivery));
 
 
-    // replace with values from short description
+    // replace with values extracted from (short) description
     if(isDefined(extracted.unknown) && extracted.unknown.length > 0)
         transformed.unknown = extracted.unknown;
 
