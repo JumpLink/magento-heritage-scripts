@@ -417,7 +417,7 @@ var transformProductInfo = function (item, callback) {
 
     // if no array, make array
     if (isDefined(transformed.unknown) && !isArray(transformed.unknown))
-        transformed.unknown =[transformed.unknown];
+        transformed.unknown = [transformed.unknown];
 
     // if (isDefined(transformed.quality) && !isArray(transformed.quality))
     //     transformed.quality = [transformed.quality];
@@ -445,6 +445,9 @@ var transformProductInfo = function (item, callback) {
 
     if (isDefined(transformed.description) && !isArray(transformed.description))
         transformed.description = [transformed.description];
+
+    // WORKAROUND VWHERITAGE
+    delete transformed.unknown;
 
     callback(null, transformed);
 }
