@@ -149,7 +149,7 @@ var getDatasOfDom = function (dom) {
 
 var seperateShortDescriptionHtmlDataArray = function (datas) {
 
-    var easyParse = new RegExp(" |:|\-|\.", 'g');
+    var easyParse = new RegExp(' |:|\-|\\\.', 'g');
 
     var currentData = "unknown"; // unknown | quality | applications | metrics | inst_position | fittinginfo | technical_data
 
@@ -172,6 +172,8 @@ var seperateShortDescriptionHtmlDataArray = function (datas) {
     for (var i = 0; i < datas.length; i++) {
 
         var test = datas[i].toLowerCase().replace(easyParse, "");
+
+        console.log(test);
 
         switch(test) {
             case 'passendfür':
@@ -334,22 +336,22 @@ var transformProductInfo = function (item, callback) {
         transformed.quality = removeWhitespaces(ent.decode(transformed.quality));
     
     if(!isArray(transformed.applications) && isDefined(transformed.applications))
-        transformed.applications = removeWhitespaces(ent.decode(transformed.applications));           // Passend für
+        transformed.applications = getDatasOfDom(transformed.applications);           // Passend für
     
     if(!isArray(transformed.metrics) && isDefined(transformed.metrics))
-        transformed.metrics = removeWhitespaces(ent.decode(transformed.metrics));                     // Maße
+        transformed.metrics = getDatasOfDom(transformed.metrics);                     // Maße
     
     if(!isArray(transformed.inst_position) && isDefined(transformed.inst_position))
-        transformed.inst_position = removeWhitespaces(ent.decode(transformed.inst_position));         // Einbauposition / Einbaulage
+        transformed.inst_position = getDatasOfDom(transformed.inst_position);         // Einbauposition / Einbaulage
     
     if(!isArray(transformed.fittinginfo) && isDefined(transformed.fittinginfo))
-        transformed.fittinginfo = removeWhitespaces(ent.decode(transformed.fittinginfo));             // Einbauhinweis / Montagehinweis
+        transformed.fittinginfo = getDatasOfDom(transformed.fittinginfo);             // Einbauhinweis / Montagehinweis
     
     if(!isArray(transformed.technical_data) && isDefined(transformed.technical_data))
-        transformed.technical_data = removeWhitespaces(ent.decode(transformed.technical_data));       // Technische Daten
+        transformed.technical_data = getDatasOfDom(transformed.technical_data);       // Technische Daten
     
     if(!isArray(transformed.unknown) && isDefined(transformed.unknown))
-        transformed.unknown = removeWhitespaces(ent.decode(transformed.unknown));                     // unbekannter Wert (Backup)
+        transformed.unknown = getDatasOfDom(transformed.unknown);                     // unbekannter Wert (Backup)
 
     // FIXME fix magento api to get string of manufacturer and not id
     // if(!isArray(transformed.manufacturer) && isDefined(transformed.manufacturer))
@@ -366,7 +368,7 @@ var transformProductInfo = function (item, callback) {
     }
 
     if(!isArray(transformed.scope_of_delivery) && isDefined(transformed.scope_of_delivery))
-        transformed.scope_of_delivery = removeWhitespaces(ent.decode(transformed.scope_of_delivery));
+        transformed.scope_of_delivery = getDatasOfDom(transformed.scope_of_delivery);
 
     if(!isArray(transformed.color) && isDefined(transformed.color))
         transformed.color = removeWhitespaces(ent.decode(transformed.color));
@@ -375,10 +377,10 @@ var transformProductInfo = function (item, callback) {
         transformed.material = removeWhitespaces(ent.decode(transformed.material));
 
     if(!isArray(transformed.comment) && isDefined(transformed.comment))
-        transformed.comment = removeWhitespaces(ent.decode(transformed.comment));
+        transformed.comment = getDatasOfDom(transformed.comment);
 
     if(!isArray(transformed.features) && isDefined(transformed.features))
-        transformed.features = removeWhitespaces(ent.decode(transformed.features));
+        transformed.features = getDatasOfDom(transformed.features);
 
 
     // replace with values extracted from (short) description
@@ -575,7 +577,7 @@ var sendMail = function (jsonObject) {
         }
     ];
 
-    // json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'manufacturer', 'short_description', 'short_description_html', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
+    // json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'manufacturer', 'short_description', 'short_description_html', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features', 'unknown' ]}, function(err, csv) {
     json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'manufacturer', 'short_description', 'short_description_html', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
         if (err) console.log(err);
         else {

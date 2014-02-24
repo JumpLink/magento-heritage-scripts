@@ -65,11 +65,19 @@ var replaceWhitespaces = function (stringValue) {
 
 // console.log(foo+";");
 
-var bar = "\r\ntest\n\r\r\n\r\n  test\r\n\ntest\r\r\n\r\n  test  \r\n\n\r\r\n\r\n  ";
+// var bar = "\r\ntest\n\r\r\n\r\n  test\r\n\ntest\r\r\n\r\n  test  \r\n\n\r\r\n\r\n  ";
 
-var regex = new RegExp("\r|\n|  ", 'g');
+// var regex = new RegExp("\r|\n|  ", 'g');
 
-//var result = stringValue.replace("\r", "").replace("\n", "").replace("  ", " ");
-var result = bar.replace(regex, "");
+// //var result = stringValue.replace("\r", "").replace("\n", "").replace("  ", " ");
+// var result = bar.replace(regex, "");
 
-console.log(result);
+// console.log(result);
+
+var bar = "  ---test-teST-teST::teST:test....     test:-..-.TEST Test";
+
+var easyParse = new RegExp(' |:|\-|\\\.', 'g');
+
+var res = bar.toLowerCase().replace(easyParse, "");
+
+console.log(res);
