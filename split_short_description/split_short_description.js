@@ -149,48 +149,73 @@ var getDatasOfDom = function (dom) {
 
 var seperateShortDescriptionHtmlDataArray = function (datas) {
 
+    var easyParse = new RegExp(" |:|\-|\.", 'g');
+
     var currentData = "unknown"; // unknown | quality | applications | metrics | inst_position | fittinginfo | technical_data
 
     var result = {
-        unknown: []
-        , quality: []
+        unknown: []                 // Unbekannter Wert (Backup)
+        , quality: []               // Qualität
         , applications: []          // Passend für
         , metrics: []               // Maße
         , inst_position: []         // Einbauposition / Einbaulage
         , fittinginfo: []           // Einbauhinweis / Montagehinweis
         , technical_data: []        // Technische Daten
         , scope_of_delivery: []     // Lieferumfang
+        , color: []                 // Farbe
+        , material: []              // Material
+        , comment: []               // Kommentar / Hinweis
+        , features: []              // Merkmale
         , short_description: datas
     }
 
     for (var i = 0; i < datas.length; i++) {
 
-        switch(datas[i].toLowerCase()) {
-            case 'passend für:':
+        var test = datas[i].toLowerCase().replace(easyParse, "");
+
+        switch(test) {
+            case 'passendfür':
                 currentData = "applications";
                 break;
-            case 'maße:':
+            case 'maße':
                 currentData = "metrics";
                 break;
-            case 'einbaulage:':
+            case 'einbaulage':
             case 'einbauposition':
                 currentData = "inst_position";
                 break;
-            case 'technische daten:':
+            case 'technischedaten':
                 currentData = "technical_data";
                 break;
-            case 'einbauhinweis:':
-            case 'montagehinweis:':
+            case 'einbauhinweis':
+            case 'montagehinweis':
                 currentData = "fittinginfo";
                 break;
-            case 'qualität:':
+            case 'qualität':
                 currentData = "quality";
                 break;
-            case 'lieferumfang:':
+            case 'lieferumfang':
+            case 'dieanlagebeinhaltet':
                 currentData = "scope_of_delivery";
                 break;
+            case 'farbe':
+                currentData = "color";
+                break;
+            case 'material':
+                currentData = "material";
+                break;
+            case 'merkmale':
+                currentData = "features";
+                break;
+            case 'comment':
+                currentData = "comment";
+                break;
             default:
-                result[currentData].push(datas[i]);
+                // try to find comments (comments have no heading)
+                if(test.length > 70)
+                    result['comment'].push(datas[i]);
+                else
+                    result[currentData].push(datas[i]);
                 break;
         }
         
@@ -293,11 +318,15 @@ var transformProductInfo = function (item, callback) {
         , fittinginfo: item.fittinginfo
         , technical_data: item.technical_data
         , unknown: item.unknown
-        //, manufacturer: item.manufacturer // FIXME fix magento api to get string of manufacturer and not id
+        , manufacturer: item.manufacturer // FIXME fix magento api to get string of manufacturer and not id
         , short_description: item.short_description
         //, description: item.description
         , description: item.vwheritage_description // WORKAROUND VWHERITAGE
         , scope_of_delivery: item.lieferumfang
+        , color: item.color
+        , material: item.material
+        , comment: item.comment
+        , features: item.features
     }
 
     // remove html umlaute usw evtl wieder entfernen
@@ -339,6 +368,18 @@ var transformProductInfo = function (item, callback) {
     if(!isArray(transformed.scope_of_delivery) && isDefined(transformed.scope_of_delivery))
         transformed.scope_of_delivery = removeWhitespaces(ent.decode(transformed.scope_of_delivery));
 
+    if(!isArray(transformed.color) && isDefined(transformed.color))
+        transformed.color = removeWhitespaces(ent.decode(transformed.color));
+
+    if(!isArray(transformed.material) && isDefined(transformed.material))
+        transformed.material = removeWhitespaces(ent.decode(transformed.material));
+
+    if(!isArray(transformed.comment) && isDefined(transformed.comment))
+        transformed.comment = removeWhitespaces(ent.decode(transformed.comment));
+
+    if(!isArray(transformed.features) && isDefined(transformed.features))
+        transformed.features = removeWhitespaces(ent.decode(transformed.features));
+
 
     // replace with values extracted from (short) description
     if(isDefined(extracted.unknown) && extracted.unknown.length > 0)
@@ -371,6 +412,17 @@ var transformProductInfo = function (item, callback) {
     if(isDefined(extracted.scope_of_delivery) && extracted.scope_of_delivery.length > 0)
         transformed.scope_of_delivery = extracted.scope_of_delivery;
 
+    if(isDefined(extracted.color) && extracted.color.length > 0)
+        transformed.color = extracted.color;
+
+    if(isDefined(extracted.material) && extracted.material.length > 0)
+        transformed.material = extracted.material;
+
+    if(isDefined(extracted.comment) && extracted.comment.length > 0)
+        transformed.comment = extracted.comment;
+
+    if(isDefined(extracted.features) && extracted.features.length > 0)
+        transformed.features = extracted.features;
 
 
     if (isEmpty(transformed.unknown))
@@ -395,8 +447,8 @@ var transformProductInfo = function (item, callback) {
         delete transformed.technical_data;
 
     // FIXME fix magento api to get string of manufacturer and not id
-    // if (isEmpty(transformed.manufacturer))
-    //     delete transformed.manufacturer;   
+    if (isEmpty(transformed.manufacturer))
+        delete transformed.manufacturer;   
 
     if (isEmpty(transformed.short_description))
         delete transformed.short_description;
@@ -412,6 +464,18 @@ var transformProductInfo = function (item, callback) {
 
     if (isEmpty(transformed.scope_of_delivery))
         delete transformed.scope_of_delivery;
+
+    if (isEmpty(transformed.color))
+        delete transformed.color;
+
+    if (isEmpty(transformed.material))
+        delete transformed.material;
+
+    if (isEmpty(transformed.features))
+        delete transformed.features;
+
+    if (isEmpty(transformed.comment))
+        delete transformed.comment;
 
 
 
@@ -437,14 +501,24 @@ var transformProductInfo = function (item, callback) {
     if (isDefined(transformed.technical_data) && !isArray(transformed.technical_data))
         transformed.technical_data = [transformed.technical_data];
 
-    // if (isDefined(transformed.manufacturer) && !isArray(transformed.manufacturer))
-    //     transformed.manufacturer = [transformed.manufacturer];
-
     if (isDefined(transformed.short_description) && !isArray(transformed.short_description))
         transformed.short_description = [transformed.short_description];
 
     if (isDefined(transformed.description) && !isArray(transformed.description))
         transformed.description = [transformed.description];
+
+    if (isDefined(transformed.color) && !isArray(transformed.color))
+        transformed.color = [transformed.color];
+
+    if (isDefined(transformed.material) && !isArray(transformed.material))
+        transformed.material = [transformed.material];
+
+    if (isDefined(transformed.comment) && !isArray(transformed.comment))
+        transformed.comment = [transformed.comment];
+
+    if (isDefined(transformed.features) && !isArray(transformed.features))
+        transformed.features = [transformed.features];
+
 
     // WORKAROUND VWHERITAGE
     delete transformed.unknown;
@@ -499,7 +573,7 @@ var sendMail = function (jsonObject) {
         }
     ];
 
-    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'manufacturer', 'short_description', 'short_description_html', 'description', 'description_html', 'scope_of_delivery' ]}, function(err, csv) {
+    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'manufacturer', 'short_description', 'short_description_html', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
         if (err) console.log(err);
         else {
             mailOptions.attachments.push({fileName: fileName+".csv", contents: csv})
