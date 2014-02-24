@@ -95,7 +95,7 @@ var fixApostrophs = function (stringValue) {
 
 var removeWhitespaces = function (stringValue) {
 
-    var regex = new RegExp("\r|\n|  ", 'g');
+    var regex = new RegExp("\r|\n|  |<br>", 'g');
 
     //var result = stringValue.replace("\r", "").replace("\n", "").replace("  ", " ");
     var result = stringValue.replace(regex, "");
@@ -522,6 +522,8 @@ var transformProductInfo = function (item, callback) {
 
     // WORKAROUND VWHERITAGE
     delete transformed.unknown;
+    delete transformed.inst_position;
+    delete transformed.fittinginfo;
 
     callback(null, transformed);
 }
@@ -561,7 +563,7 @@ var sendMail = function (jsonObject) {
     var mailOptions = config.mailoptions;
     var fileName = "bugwelder-german-"+moment().format();
 
-    mailOptions.subject += " "+moment().format('MMMM Do YYYY, h:mm:ss a'); // Subject line
+    mailOptions.subject = "[unstable] "+mailOptions.subject+" "+moment().format('MMMM Do YYYY, h:mm:ss a'); // Subject line
     mailOptions.attachments = [
         {   // utf-8 string as an attachment
             fileName: fileName+".json",
@@ -573,7 +575,8 @@ var sendMail = function (jsonObject) {
         }
     ];
 
-    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'manufacturer', 'short_description', 'short_description_html', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
+    // json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'manufacturer', 'short_description', 'short_description_html', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
+    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'manufacturer', 'short_description', 'short_description_html', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
         if (err) console.log(err);
         else {
             mailOptions.attachments.push({fileName: fileName+".csv", contents: csv})
