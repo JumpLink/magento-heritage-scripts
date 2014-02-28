@@ -4,10 +4,11 @@
   "version": "0.0.1",
   "author": "Pascal Garber <pascal.garber@gmail.com>",
   "dependencies": {
-    "fetch": "*"
+    "fetch": "*",
+    "nodemailer": "~0.6.0"
   },
   "devDependencies": {
-  	"json-fs": "git://github.com/JumpLink/node-json-fs.git"
+    "json-fs": "git://github.com/JumpLink/node-json-fs.git"
   },
   "main": "index",
   "repository": "git://github.com/JumpLink/node-heritage.git"

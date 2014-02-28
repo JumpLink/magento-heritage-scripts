@@ -30,7 +30,7 @@ var heritage_data;
 var heritage_skus_set;
 var magento_skus_set = new sets.Set();
 var MWST = 1.19; // VAT
-var EURO = 1.27;
+var EURO = 1.25;
 var magento_csv_filename  = argv.source;
 var result_csv_filename = argv.output;
 
