@@ -543,13 +543,19 @@ var splitShortDescription = function (callback) {
     async.waterfall([
         getProductList,
         function getEachProductInfo(items, callback) {
-            async.map(items, getProductInfo, callback);
+            process.nextTick(function() {
+                async.mapSeries(items, getProductInfo, callback);
+            });
         },
         function removeInactives(items, callback) {
-            async.filter(items, isActive, function(results){callback(null, results)});
+            process.nextTick(function() {
+                async.filterSeries(items, isActive, function(results){callback(null, results)});
+            });
         },
         function transformEach(items, callback) {
-            async.map(items, transformProductInfo, callback);
+            process.nextTick(function() {
+                async.mapSeries(items, transformProductInfo, callback);
+            });
         }
     ], function (err, results) {
        callback(null, results); 
