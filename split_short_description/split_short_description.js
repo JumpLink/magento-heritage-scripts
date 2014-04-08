@@ -543,13 +543,13 @@ var splitShortDescription = function (callback) {
     async.waterfall([
         getProductList,
         function getEachProductInfo(items, callback) {
-            async.mapSeries(items, getProductInfo, callback);
+            async.map(items, getProductInfo, callback);
         },
         function removeInactives(items, callback) {
-            async.filterSeries(items, isActive, function(results){callback(null, results)});
+            async.filter(items, isActive, function(results){callback(null, results)});
         },
         function transformEach(items, callback) {
-            async.mapSeries(items, transformProductInfo, callback);
+            async.map(items, transformProductInfo, callback);
         }
     ], function (err, results) {
        callback(null, results); 

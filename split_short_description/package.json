@@ -3,12 +3,12 @@
   "version": "0.0.0",
   "main": "german_translation_heritage.js",
   "dependencies": {
-    "htmlparser2": "~3.4.0",
-    "async": "~0.2.10",
-    "nodemailer": "^0.6.0",
-    "ent": "^0.1.0",
-    "moment": "~2.5.1",
-    "easyxml": "0.0.5",
+    "htmlparser2": "3.4.*",
+    "async": "0.7.*",
+    "nodemailer": "0.6.*",
+    "ent": "0.1.*",
+    "moment": "2.5.*",
+    "easyxml": "0.0.*",
     "json2csv": "git://github.com/JumpLink/json2csv"
   },
   "devDependencies": {},
