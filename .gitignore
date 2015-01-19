@@ -17,7 +17,9 @@ test.txt
 core
 config.json
 
+
 npm-debug.log
+.c9/
 fetch/
 xmlrpc/
 csv/
