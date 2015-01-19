@@ -321,8 +321,6 @@ var transformProductInfo = function (item, callback) {
         , technical_data: item.technical_data
         , unknown: item.unknown
         , manufacturer: item.manufacturer // FIXME fix magento api to get string of manufacturer and not id
-        , short_description: item.short_description
-        //, description: item.description
         , description: item.vwheritage_description // WORKAROUND VWHERITAGE
         , scope_of_delivery: item.lieferumfang
         , color: item.color
@@ -330,6 +328,61 @@ var transformProductInfo = function (item, callback) {
         , comment: item.comment
         , features: item.features
     }
+    
+    // description backports, vh_heritage description geht vor, sonst description, ansonsten short description 
+    if(isDefined(item.short_descriptionn) && item.short_description.length > 0)
+        transformed.description = item.short_description;
+    
+    if(isDefined(extracted.short_description) && extracted.short_description.length > 0)
+        transformed.description = extracted.short_description;
+    
+    if(isDefined(item.description) && item.description.length > 0) // description only if it is not defined
+        transformed.description = item.description;
+
+    if(isDefined(extracted.description) && extracted.description.length > 0) // description only if it is not defined
+        transformed.description = extracted.description;
+        
+    if(isDefined(item.vwheritage_description) && item.vwheritage_description.length > 0) // description only if it is not defined
+        transformed.description = extracted.descriptionitem.vwheritage_description;
+        
+        
+    // replace with values extracted from (short) description
+    if(isDefined(extracted.unknown) && extracted.unknown.length > 0)
+        transformed.unknown = extracted.unknown;
+
+    if(isDefined(extracted.quality) && extracted.quality.length > 0)
+        transformed.quality = extracted.quality;
+
+    if(isDefined(extracted.applications) && extracted.applications.length > 0)
+        transformed.applications = extracted.applications;
+
+    if(isDefined(extracted.metrics) && extracted.metrics.length > 0)
+        transformed.metrics = extracted.metrics;
+
+    if(isDefined(extracted.inst_position) && extracted.inst_position.length > 0)
+        transformed.inst_position = extracted.inst_position;
+
+    if(isDefined(extracted.fittinginfo) && extracted.fittinginfo.length > 0)
+        transformed.fittinginfo = extracted.fittinginfo;
+
+    if(isDefined(extracted.technical_data) && extracted.technical_data.length > 0)
+        transformed.technical_data = extracted.technical_data;
+
+    if(isDefined(extracted.scope_of_delivery) && extracted.scope_of_delivery.length > 0)
+        transformed.scope_of_delivery = extracted.scope_of_delivery;
+
+    if(isDefined(extracted.color) && extracted.color.length > 0)
+        transformed.color = extracted.color;
+
+    if(isDefined(extracted.material) && extracted.material.length > 0)
+        transformed.material = extracted.material;
+
+    if(isDefined(extracted.comment) && extracted.comment.length > 0)
+        transformed.comment = extracted.comment;
+
+    if(isDefined(extracted.features) && extracted.features.length > 0)
+        transformed.features = extracted.features;
+    
 
     // remove html umlaute usw evtl wieder entfernen
     if(!isArray(transformed.quality) && isDefined(transformed.quality))
@@ -357,14 +410,9 @@ var transformProductInfo = function (item, callback) {
     // if(!isArray(transformed.manufacturer) && isDefined(transformed.manufacturer))
     //     transformed.manufacturer = removeWhitespaces(ent.decode(transformed.manufacturer));
 
-    if(!isArray(transformed.short_description) && isDefined(transformed.short_description)) {
-        transformed.short_description = removeWhitespaces(ent.decode(transformed.short_description));
-        transformed.short_description_html = transformed.short_description;
-    }
-
     if(!isArray(transformed.description) && isDefined(transformed.description)) {
-        transformed.description = removeWhitespaces(ent.decode(transformed.description));
         transformed.description_html = transformed.description;
+        transformed.description = removeWhitespaces(ent.decode(transformed.description));
     }
 
     if(!isArray(transformed.scope_of_delivery) && isDefined(transformed.scope_of_delivery))
@@ -382,49 +430,6 @@ var transformProductInfo = function (item, callback) {
     if(!isArray(transformed.features) && isDefined(transformed.features))
         transformed.features = getDatasOfDom(transformed.features);
 
-
-    // replace with values extracted from (short) description
-    if(isDefined(extracted.unknown) && extracted.unknown.length > 0)
-        transformed.unknown = extracted.unknown;
-
-    if(isDefined(extracted.quality) && extracted.quality.length > 0)
-        transformed.quality = extracted.quality;
-
-    if(isDefined(extracted.applications) && extracted.applications.length > 0)
-        transformed.applications = extracted.applications;
-
-    if(isDefined(extracted.metrics) && extracted.metrics.length > 0)
-        transformed.metrics = extracted.metrics;
-
-    if(isDefined(extracted.inst_position) && extracted.inst_position.length > 0)
-        transformed.inst_position = extracted.inst_position;
-
-    if(isDefined(extracted.fittinginfo) && extracted.fittinginfo.length > 0)
-        transformed.fittinginfo = extracted.fittinginfo;
-
-    if(isDefined(extracted.technical_data) && extracted.technical_data.length > 0)
-        transformed.technical_data = extracted.technical_data;
-
-    if(isDefined(extracted.short_description) && extracted.short_description.length > 0)
-        transformed.short_description = extracted.short_description;
-
-    if(isDefined(extracted.description) && extracted.description.length > 0)
-        transformed.description = extracted.description;
-
-    if(isDefined(extracted.scope_of_delivery) && extracted.scope_of_delivery.length > 0)
-        transformed.scope_of_delivery = extracted.scope_of_delivery;
-
-    if(isDefined(extracted.color) && extracted.color.length > 0)
-        transformed.color = extracted.color;
-
-    if(isDefined(extracted.material) && extracted.material.length > 0)
-        transformed.material = extracted.material;
-
-    if(isDefined(extracted.comment) && extracted.comment.length > 0)
-        transformed.comment = extracted.comment;
-
-    if(isDefined(extracted.features) && extracted.features.length > 0)
-        transformed.features = extracted.features;
 
 
     if (isEmpty(transformed.unknown))
@@ -451,12 +456,6 @@ var transformProductInfo = function (item, callback) {
     // FIXME fix magento api to get string of manufacturer and not id
     if (isEmpty(transformed.manufacturer))
         delete transformed.manufacturer;   
-
-    if (isEmpty(transformed.short_description))
-        delete transformed.short_description;
-
-    if (isEmpty(transformed.short_description_html))
-        delete transformed.short_description_html;
 
     if (isEmpty(transformed.description))
         delete transformed.description;
@@ -502,9 +501,6 @@ var transformProductInfo = function (item, callback) {
 
     if (isDefined(transformed.technical_data) && !isArray(transformed.technical_data))
         transformed.technical_data = [transformed.technical_data];
-
-    if (isDefined(transformed.short_description) && !isArray(transformed.short_description))
-        transformed.short_description = [transformed.short_description];
 
     if (isDefined(transformed.description) && !isArray(transformed.description))
         transformed.description = [transformed.description];
@@ -583,8 +579,7 @@ var sendMail = function (jsonObject) {
         }
     ];
 
-    // json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'inst_position', 'fittinginfo', 'technical_data', 'manufacturer', 'short_description', 'short_description_html', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features', 'unknown' ]}, function(err, csv) {
-    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'manufacturer', 'short_description', 'short_description_html', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
+    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'manufacturer', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
         if (err) console.log(err);
         else {
             mailOptions.attachments.push({fileName: fileName+".csv", contents: csv})
