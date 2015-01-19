@@ -587,12 +587,12 @@ var sendMail = function (jsonObject) {
     mailOptions.attachments = [
         {   // utf-8 string as an attachment
             filename: filename+".json",
-            contents:  JSON.stringify(jsonObject, null, 2),
+            content:  JSON.stringify(jsonObject, null, 2),
             contentType: 'application/json'
         },
         {   // utf-8 string as an attachment
             filename: filename+".xml",
-            contents: easyXML.render(jsonObject),
+            content: easyXML.render(jsonObject),
             contentType: 'application/xml'
         }
     ];
@@ -600,7 +600,7 @@ var sendMail = function (jsonObject) {
     json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'manufacturer', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
         if (err) console.log(err);
         else {
-            mailOptions.attachments.push({filename: filename+".csv", contents: csv, contentType: 'text/csv'})
+            mailOptions.attachments.push({filename: filename+".csv", content: csv, contentType: 'text/csv'})
         }
 
         mailTransport.sendMail(mailOptions, function(error, response){
