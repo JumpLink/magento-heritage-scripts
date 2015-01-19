@@ -3,13 +3,20 @@ var config = require("./config.json");
 var async = require('async');
 var htmlparser = require("htmlparser2"); // https://github.com/fb55/htmlparser2
 var util = require("util");
-var ent = require('ent'); // https://github.com/substack/node-ent
+var ent = require('ent'); // hgt
 var moment = require('moment'); // http://momentjs.com/
 var easyXML = require('easyxml'); // https://github.com/QuickenLoans/node-easyxml
 var json2csv = require('json2csv'); // https://github.com/zeMirco/json2csv
 var S = require('string');  // https://www.npmjs.com/package/sanitize-html
 
-easyXML.configure({ rootElement: 'bugwelder-german-products', singularizeChildren: true, underscoreAttributes: true, manifest: true, indent: 2 });
+var xmlSerializer = new EasyXml({
+    singularizeChildren: true,
+    allowAttributes: true,
+    rootElement: 'bugwelder-german-products',
+    dateFormat: 'ISO',
+    indent: 2,
+    manifest: true
+});
 
 
 var isDefined = function(value) {
@@ -591,7 +598,7 @@ var sendMail = function (jsonObject) {
         },
         {   // utf-8 string as an attachment
             filename: filename+".xml",
-            content: easyXML.render(jsonObject),
+            content: xmlSerializer.render(jsonObject),
             contentType: 'application/xml'
         }
     ];
