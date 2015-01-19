@@ -578,27 +578,29 @@ var splitShortDescription = function (callback) {
 var sendMail = function (jsonObject) {
 
     var nodemailer = require("nodemailer");                     // https://github.com/andris9/Nodemailer
-    var mailTransport = nodemailer.createTransport(config.nodemailer.transport, config.nodemailer);
+    var mailTransport = nodemailer.createTransport(config.nodemailer.transport);
 
     var mailOptions = config.mailoptions;
-    var fileName = "bugwelder-german-"+moment().format();
+    var filename = "bugwelder-german-"+moment().format();
 
     mailOptions.subject = "[unstable] "+mailOptions.subject+" "+moment().format('MMMM Do YYYY, h:mm:ss a'); // Subject line
     mailOptions.attachments = [
         {   // utf-8 string as an attachment
-            fileName: fileName+".json",
-            contents:  JSON.stringify(jsonObject, null, 2)
+            filename: filename+".json",
+            contents:  JSON.stringify(jsonObject, null, 2),
+            contentType: 'application/json'
         },
         {   // utf-8 string as an attachment
-            fileName: fileName+".xml",
-            contents: easyXML.render(jsonObject)
+            filename: filename+".xml",
+            contents: easyXML.render(jsonObject),
+            contentType: 'application/xml'
         }
     ];
 
     json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'manufacturer', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
         if (err) console.log(err);
         else {
-            mailOptions.attachments.push({fileName: fileName+".csv", contents: csv})
+            mailOptions.attachments.push({filename: filename+".csv", contents: csv, contentType: 'text/csv'})
         }
 
         mailTransport.sendMail(mailOptions, function(error, response){
@@ -609,7 +611,9 @@ var sendMail = function (jsonObject) {
             }
 
             // if you don't want to use this transport object anymore, uncomment following line
-            mailTransport.close(); // shut down the connection pool, no more messages
+            mailTransport.close(function(error) {
+                if(error) console.log(error);
+            }); // shut down the connection pool, no more messages
         });
     });
 }
