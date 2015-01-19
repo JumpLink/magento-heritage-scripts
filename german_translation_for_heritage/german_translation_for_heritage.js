@@ -7,6 +7,7 @@ var ent = require('ent'); // https://github.com/substack/node-ent
 var moment = require('moment'); // http://momentjs.com/
 var easyXML = require('easyxml'); // https://github.com/QuickenLoans/node-easyxml
 var json2csv = require('json2csv'); // https://github.com/zeMirco/json2csv
+var S = require('string');  // https://www.npmjs.com/package/sanitize-html
 
 easyXML.configure({ rootElement: 'bugwelder-german-products', singularizeChildren: true, underscoreAttributes: true, manifest: true, indent: 2 });
 
@@ -329,62 +330,11 @@ var transformProductInfo = function (item, callback) {
         , features: item.features
     }
     
-    // description backports, vh_heritage description geht vor, sonst description, ansonsten short description 
-    if(isDefined(item.short_descriptionn) && item.short_description.length > 0)
-        transformed.description = item.short_description;
     
-    if(isDefined(extracted.short_description) && extracted.short_description.length > 0)
-        transformed.description = extracted.short_description;
     
-    if(isDefined(item.description) && item.description.length > 0) // description only if it is not defined
-        transformed.description = item.description;
-
-    if(isDefined(extracted.description) && extracted.description.length > 0) // description only if it is not defined
-        transformed.description = extracted.description;
-        
-    if(isDefined(item.vwheritage_description) && item.vwheritage_description.length > 0) // description only if it is not defined
-        transformed.description = item.vwheritage_description;
-        
-        
-    // replace with values extracted from (short) description
-    if(isDefined(extracted.unknown) && extracted.unknown.length > 0)
-        transformed.unknown = extracted.unknown;
-
-    if(isDefined(extracted.quality) && extracted.quality.length > 0)
-        transformed.quality = extracted.quality;
-
-    if(isDefined(extracted.applications) && extracted.applications.length > 0)
-        transformed.applications = extracted.applications;
-
-    if(isDefined(extracted.metrics) && extracted.metrics.length > 0)
-        transformed.metrics = extracted.metrics;
-
-    if(isDefined(extracted.inst_position) && extracted.inst_position.length > 0)
-        transformed.inst_position = extracted.inst_position;
-
-    if(isDefined(extracted.fittinginfo) && extracted.fittinginfo.length > 0)
-        transformed.fittinginfo = extracted.fittinginfo;
-
-    if(isDefined(extracted.technical_data) && extracted.technical_data.length > 0)
-        transformed.technical_data = extracted.technical_data;
-
-    if(isDefined(extracted.scope_of_delivery) && extracted.scope_of_delivery.length > 0)
-        transformed.scope_of_delivery = extracted.scope_of_delivery;
-
-    if(isDefined(extracted.color) && extracted.color.length > 0)
-        transformed.color = extracted.color;
-
-    if(isDefined(extracted.material) && extracted.material.length > 0)
-        transformed.material = extracted.material;
-
-    if(isDefined(extracted.comment) && extracted.comment.length > 0)
-        transformed.comment = extracted.comment;
-
-    if(isDefined(extracted.features) && extracted.features.length > 0)
-        transformed.features = extracted.features;
     
-
     // remove html umlaute usw evtl wieder entfernen
+    // getDatasOfDom funktoniert nur bei extrahierten werden aus transformed
     if(!isArray(transformed.quality) && isDefined(transformed.quality))
         transformed.quality = removeWhitespaces(ent.decode(transformed.quality));
     
@@ -429,8 +379,74 @@ var transformProductInfo = function (item, callback) {
 
     if(!isArray(transformed.features) && isDefined(transformed.features))
         transformed.features = getDatasOfDom(transformed.features);
+        
+        
+        
 
+        
+    
+    // description backports, vh_heritage description geht vor, sonst description, ansonsten short description 
+    if(isDefined(item.short_descriptionn) && item.short_description.length > 0)
+        transformed.description = item.short_description;
+    
+    if(isDefined(extracted.short_description) && extracted.short_description.length > 0)
+        transformed.description = extracted.short_description;
+    
+    if(isDefined(item.description) && item.description.length > 0) // description only if it is not defined
+        transformed.description = item.description;
 
+    if(isDefined(extracted.description) && extracted.description.length > 0) // description only if it is not defined
+        transformed.description = extracted.description;
+        
+    if(isDefined(item.vwheritage_description) && item.vwheritage_description.length > 0) // description only if it is not defined
+        transformed.description = item.vwheritage_description;
+        
+        
+    // evtl noch vorhandene html tags entfernen
+    if(isDefined(transformed.description)) 
+        transformed.description = S(transformed.description).stripTags().s;
+        
+        
+
+        
+        
+    // replace with values extracted from (short) description
+    if(isDefined(extracted.unknown) && extracted.unknown.length > 0)
+        transformed.unknown = extracted.unknown;
+
+    if(isDefined(extracted.quality) && extracted.quality.length > 0)
+        transformed.quality = extracted.quality;
+
+    if(isDefined(extracted.applications) && extracted.applications.length > 0)
+        transformed.applications = extracted.applications;
+
+    if(isDefined(extracted.metrics) && extracted.metrics.length > 0)
+        transformed.metrics = extracted.metrics;
+
+    if(isDefined(extracted.inst_position) && extracted.inst_position.length > 0)
+        transformed.inst_position = extracted.inst_position;
+
+    if(isDefined(extracted.fittinginfo) && extracted.fittinginfo.length > 0)
+        transformed.fittinginfo = extracted.fittinginfo;
+
+    if(isDefined(extracted.technical_data) && extracted.technical_data.length > 0)
+        transformed.technical_data = extracted.technical_data;
+
+    if(isDefined(extracted.scope_of_delivery) && extracted.scope_of_delivery.length > 0)
+        transformed.scope_of_delivery = extracted.scope_of_delivery;
+
+    if(isDefined(extracted.color) && extracted.color.length > 0)
+        transformed.color = extracted.color;
+
+    if(isDefined(extracted.material) && extracted.material.length > 0)
+        transformed.material = extracted.material;
+
+    if(isDefined(extracted.comment) && extracted.comment.length > 0)
+        transformed.comment = extracted.comment;
+
+    if(isDefined(extracted.features) && extracted.features.length > 0)
+        transformed.features = extracted.features;
+    
 
     if (isEmpty(transformed.unknown))
         delete transformed.unknown;
