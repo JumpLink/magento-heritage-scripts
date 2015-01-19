@@ -360,11 +360,6 @@ var transformProductInfo = function (item, callback) {
     // if(!isArray(transformed.manufacturer) && isDefined(transformed.manufacturer))
     //     transformed.manufacturer = removeWhitespaces(ent.decode(transformed.manufacturer));
 
-    if(!isArray(transformed.description) && isDefined(transformed.description)) {
-        transformed.description_html = transformed.description;
-        transformed.description = removeWhitespaces(ent.decode(transformed.description));
-    }
-
     if(!isArray(transformed.scope_of_delivery) && isDefined(transformed.scope_of_delivery))
         transformed.scope_of_delivery = getDatasOfDom(transformed.scope_of_delivery);
 
@@ -402,9 +397,11 @@ var transformProductInfo = function (item, callback) {
         transformed.description = item.vwheritage_description;
         
         
-    // evtl noch vorhandene html tags entfernen
-    if(isDefined(transformed.description)) 
-        transformed.description = S(transformed.description).stripTags().s;
+    // und säubern
+    if(isDefined(transformed.description)) {
+        transformed.description_html = transformed.description
+        transformed.description = removeWhitespaces(ent.decode(S(transformed.description)).stripTags().s)
+    }
         
         
 
@@ -584,7 +581,7 @@ var sendMail = function (jsonObject) {
     var filename = "bugwelder-german-"+moment().format();
 
     mailOptions.subject = "[unstable] "+mailOptions.subject+" "+moment().format('MMMM Do YYYY, h:mm:ss a'); // Subject line
-    mailOptions.attachments = [
+    mailOptions. = [
         {   // utf-8 string as an attachment
             filename: filename+".json",
             content:  JSON.stringify(jsonObject, null, 2),
