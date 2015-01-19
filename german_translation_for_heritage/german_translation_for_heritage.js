@@ -99,8 +99,10 @@ var removeWhitespaces = function (stringValue) {
     var regex = new RegExp("\r|\n|  |<br>", 'g');
 
     //var result = stringValue.replace("\r", "").replace("\n", "").replace("  ", " ");
-    var result = stringValue.replace(regex, "");
+    var result = stringValue.replace(regex, " ");
     
+    
+    result = result.replace("  ", " ").replace("  ", " ").replace("  ", " "); // doppelte leerzeichen entfernen 
 
     // remove first space
     if(!isEmpty(result) && isEmptyChar(result.charAt(0)))
