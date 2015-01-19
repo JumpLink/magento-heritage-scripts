@@ -9,9 +9,11 @@
         			"pass": "userpass"
     			}
 		}
-	}
-	"mailoptions": {
-		"subject": "bugwelder-german-products"
-		
-	}
+	},
+        "mailoptions": {
+                "subject": "bugwelder-german-products",
+                "from": "gmail.user@gmail.com",
+                "to": "target@domain.com",
+                "text": "hello world!"
+        }
 }
