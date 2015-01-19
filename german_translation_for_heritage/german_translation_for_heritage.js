@@ -62,7 +62,7 @@ var getProductList = function (callback) {
 
 var getProductInfo = function (item, callback) {
 
-    //console.log(item);
+    console.log(item);
     var magento_shell_api = require("./magento_shell_api.js")(config);
 
     var options = {
