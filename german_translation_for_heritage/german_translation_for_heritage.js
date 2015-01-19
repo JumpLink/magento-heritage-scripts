@@ -8,7 +8,8 @@ var moment = require('moment'); // http://momentjs.com/
 var EasyXml = require('easyxml'); // https://github.com/QuickenLoans/node-easyxml
 var json2csv = require('json2csv'); // https://github.com/zeMirco/json2csv
 var S = require('string');  // https://www.npmjs.com/package/sanitize-html
-
+var fs = require('fs-extra'); // https://github.com/jprichardson/node-fs-extra
+ 
 var xmlSerializer = new EasyXml({
     singularizeChildren: true,
     allowAttributes: true,
@@ -580,52 +581,93 @@ var splitShortDescription = function (callback) {
     });
 }
 
-
-var sendMail = function (jsonObject) {
-
-    var nodemailer = require("nodemailer");                     // https://github.com/andris9/Nodemailer
-    var mailTransport = nodemailer.createTransport(config.nodemailer.transport);
-
-    var mailOptions = config.mailoptions;
+var generateAttachments = function (jsonObject, callback) {
     var filename = "bugwelder-german-"+moment().format();
-
-    mailOptions.subject = "[unstable] "+mailOptions.subject+" "+moment().format('MMMM Do YYYY, h:mm:ss a'); // Subject line
-    mailOptions.attachments = [
+    var filenameLatest = "bugwelder-german-latest";
+    var attachments = [
         {   // utf-8 string as an attachment
             filename: filename+".json",
+            filenameLatest: filenameLatest+".json",
             content:  JSON.stringify(jsonObject, null, 2),
             contentType: 'application/json'
         },
         {   // utf-8 string as an attachment
             filename: filename+".xml",
+            filenameLatest: filenameLatest+".xml",
             content: xmlSerializer.render(jsonObject),
             contentType: 'application/xml'
         }
     ];
-
+    
     json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'manufacturer', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
-        if (err) console.log(err);
+        if (err) callback(err);
         else {
-            mailOptions.attachments.push({filename: filename+".csv", content: csv, contentType: 'text/csv'})
+            attachments.push({
+                filename: filename+".csv",
+                filenameLatest: filenameLatest+".csv",
+                content: csv,
+                contentType: 'text/csv'
+                
+            });
+            callback(null, attachments);
         }
-
-        mailTransport.sendMail(mailOptions, function(error, response){
-            if(error){
-                console.log(error);
-            }else{
-                console.log("Message sent: " + response.message);
-            }
-
-            // if you don't want to use this transport object anymore, uncomment following line
-            mailTransport.close(function(error) {
-                if(error) console.log(error);
-            }); // shut down the connection pool, no more messages
-        });
     });
+}
+
+var backupAttachments = function (attachments) {
+    var path = config.backupAttachmentsPath;
+    fs.ensureDir(path, function(err) {
+        console.log(err) // => null
+        for (var i = attachments.length; i--; ) {
+            var file = path + "/" + attachments[i].filename;;
+            var latestFile = path + "/" + attachments[i].filename;
+            fs.outputFile(filepath, attachments[i].content, function(err) {
+            if(err) return console.log(err);
+                fs.remove(latestFile, function(err) {
+                    if (err) return console.error(err)
+                    fs.copy(file, latestFile, function(err) {
+                      if (err) return console.error(err)
+                    });
+                });
+            }); 
+        }
+    });
+
+}
+
+
+var sendMail = function (jsonObject, attachments, callback) {
+
+    var nodemailer = require("nodemailer");                     // https://github.com/andris9/Nodemailer
+    var mailTransport = nodemailer.createTransport(config.nodemailer.transport);
+
+    var mailOptions = config.mailoptions;
+
+    mailOptions.subject = "[unstable] "+mailOptions.subject+" "+moment().format('MMMM Do YYYY, h:mm:ss a'); // Subject line
+    
+    mailOptions.attachments = attachments;
+    
+    mailTransport.sendMail(mailOptions, function(error, info){
+        if(error) return callback(error);
+
+        // if you don't want to use this transport object anymore, uncomment following line
+        mailTransport.close(function(error) {
+            if(error) return callback(error);
+            callback (null, info);
+        }); // shut down the connection pool, no more messages
+    });
+        
+
 }
 
 splitShortDescription( function (error, results) {
     console.log(util.inspect(error, showHidden=false, depth=4, colorize=false));
     console.log(util.inspect(results, showHidden=false, depth=4, colorize=true));
-    sendMail(results);
+    generateAttachments(results, function (error, attachments) {
+        backupAttachments(attachments);
+        sendMail(results, attachments, function () {
+            
+        });
+    });
+
 });
