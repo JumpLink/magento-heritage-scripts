@@ -1,0 +1,17 @@
+{
+	"path": "/var/www/bugwelder-shop-mageplus/shell/JumpLink/Shell/API_Shell.php",
+	"max_products": 50000,
+	"nodemailer": {
+		"transport": {
+    			"service": "Gmail",
+    			"auth": {
+        			"user": "gmail.user@gmail.com",
+        			"pass": "userpass"
+    			}
+		}
+	}
+	"mailoptions": {
+		"subject": "bugwelder-german-products"
+		
+	}
+}
