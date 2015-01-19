@@ -581,7 +581,7 @@ var sendMail = function (jsonObject) {
     var filename = "bugwelder-german-"+moment().format();
 
     mailOptions.subject = "[unstable] "+mailOptions.subject+" "+moment().format('MMMM Do YYYY, h:mm:ss a'); // Subject line
-    mailOptions. = [
+    mailOptions.attachments = [
         {   // utf-8 string as an attachment
             filename: filename+".json",
             content:  JSON.stringify(jsonObject, null, 2),
