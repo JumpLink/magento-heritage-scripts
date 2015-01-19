@@ -343,7 +343,7 @@ var transformProductInfo = function (item, callback) {
         transformed.description = extracted.description;
         
     if(isDefined(item.vwheritage_description) && item.vwheritage_description.length > 0) // description only if it is not defined
-        transformed.description = extracted.descriptionitem.vwheritage_description;
+        transformed.description = item.vwheritage_description;
         
         
     // replace with values extracted from (short) description
