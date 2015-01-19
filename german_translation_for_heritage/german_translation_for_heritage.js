@@ -400,7 +400,7 @@ var transformProductInfo = function (item, callback) {
     // und säubern
     if(isDefined(transformed.description)) {
         transformed.description_html = transformed.description
-        transformed.description = removeWhitespaces(ent.decode(S(transformed.description)).stripTags().s)
+        transformed.description = removeWhitespaces(ent.decode(S(transformed.description).stripTags().s))
     }
         
         
@@ -567,7 +567,7 @@ var splitShortDescription = function (callback) {
             });
         }
     ], function (err, results) {
-       callback(null, results); 
+       callback(err, results); 
     });
 }
 
