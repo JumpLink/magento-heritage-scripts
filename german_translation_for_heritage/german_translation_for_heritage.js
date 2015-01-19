@@ -5,7 +5,7 @@ var htmlparser = require("htmlparser2"); // https://github.com/fb55/htmlparser2
 var util = require("util");
 var ent = require('ent'); // hgt
 var moment = require('moment'); // http://momentjs.com/
-var easyXML = require('easyxml'); // https://github.com/QuickenLoans/node-easyxml
+var EasyXml = require('easyxml'); // https://github.com/QuickenLoans/node-easyxml
 var json2csv = require('json2csv'); // https://github.com/zeMirco/json2csv
 var S = require('string');  // https://www.npmjs.com/package/sanitize-html
 
