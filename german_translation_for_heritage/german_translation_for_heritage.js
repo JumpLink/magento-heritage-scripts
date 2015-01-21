@@ -110,7 +110,7 @@ var removeWhitespaces = function (stringValue) {
     var result = stringValue.replace(regex, " ");
     
     
-    result = result.replace("  ", " ").replace("  ", " ").replace("  ", " "); // doppelte leerzeichen entfernen 
+    result = result.replace("  ", " ").replace("  ", " ").replace("  ", " ").replace("  ", " ").replace("  ", " ").replace("  ", " ").replace("  ", " "); // doppelte leerzeichen entfernen 
 
     // remove first space
     if(!isEmpty(result) && isEmptyChar(result.charAt(0)))
@@ -407,14 +407,19 @@ var transformProductInfo = function (item, callback) {
         transformed.description = item.vwheritage_description;
         
         
+        
+        
     // und säubern
     if(isDefined(transformed.description)) {
         transformed.description_html = transformed.description
         transformed.description = removeWhitespaces(ent.decode(S(transformed.description).stripTags().s))
     }
         
+   // WORKAROUND why description is an array?
+    if(isArray(transformed.description) && isDefined(transformed.description))
+        transformed.description = transformed.description[0];
         
-
+        
         
         
     // replace with values extracted from (short) description
@@ -615,28 +620,47 @@ var generateAttachments = function (jsonObject, callback) {
 }
 
 // TODO use async and callback
-var backupAttachments = function (attachments) {
+var backupAttachments = function (attachments, callback) {
     var path = config.backupAttachmentsPath;
     fs.ensureDir(path, function(err) {
         console.log(err) // => null
-        for (var i = attachments.length; i--; ) {
-            var file = path + "/" + attachments[i].filename;;
-            var latestFile = path + "/" + attachments[i].filenameLatest;
-            console.log("i", i);
+        
+        async.each(attachments, function(attachment, callback) {
+            var file = path + "/" + attachment.filename;;
+            var latestFile = path + "/" + attachment.filenameLatest;
             console.log("file", file);
             console.log("latestFile", latestFile);
-            //console.log("(attachments[i]", attachments[i]);
-            fs.outputFile(file, attachments[i].content, function(err) {
-                if(err) return console.log(err);
+            fs.outputFile(file, attachment.content, function(err) {
+                if(err) return callback(err);
                 // overwrite old latestFile if exists
                 fs.remove(latestFile, function(err) {
-                    if (err) return console.error(err)
+                    if (err) return callback(err);
                     fs.copy(file, latestFile, function(err) {
-                      if (err) return console.error(err)
+                      if (err) return callback(err);
+                      callback(null);
                     });
                 });
-            }); 
-        }
+            });
+        }, callback);
+        
+        // for (var i = attachments.length; i--; ) {
+        //     var file = path + "/" + attachments[i].filename;;
+        //     var latestFile = path + "/" + attachments[i].filenameLatest;
+        //     console.log("i", i);
+        //     console.log("file", file);
+        //     console.log("latestFile", latestFile);
+        //     //console.log("(attachments[i]", attachments[i]);
+        //     fs.outputFile(file, attachments[i].content, function(err) {
+        //         if(err) return console.log(err);
+        //         // overwrite old latestFile if exists
+        //         fs.remove(latestFile, function(err) {
+        //             if (err) return console.error(err)
+        //             fs.copy(file, latestFile, function(err) {
+        //               if (err) return console.error(err)
+        //             });
+        //         });
+        //     }); 
+        // }
     });
 
 }
@@ -670,9 +694,11 @@ splitShortDescription( function (error, results) {
     console.log(util.inspect(error, showHidden=false, depth=4, colorize=false));
     console.log(util.inspect(results, showHidden=false, depth=4, colorize=true));
     generateAttachments(results, function (error, attachments) {
-        backupAttachments(attachments);
-        sendMail(results, attachments, function (error, info) {
-            console.log("done");
+        backupAttachments(attachments, function (err) {
+            if(err) console.error(err);
+            sendMail(results, attachments, function (error, info) {
+                console.log("done");
+            });
         });
     });
 
