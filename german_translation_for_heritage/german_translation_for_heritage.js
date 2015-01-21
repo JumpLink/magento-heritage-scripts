@@ -415,9 +415,9 @@ var transformProductInfo = function (item, callback) {
         transformed.description = removeWhitespaces(ent.decode(S(transformed.description).stripTags().s))
     }
         
-   // WORKAROUND why description is an array?
-    if(isArray(transformed.description) && isDefined(transformed.description))
-        transformed.description = transformed.description[0];
+    // WORKAROUND why description is an array?
+    // if(isArray(transformed.description) && isDefined(transformed.description))
+    //     transformed.description = transformed.description[0];
         
         
         
@@ -529,9 +529,6 @@ var transformProductInfo = function (item, callback) {
 
     if (isDefined(transformed.technical_data) && !isArray(transformed.technical_data))
         transformed.technical_data = [transformed.technical_data];
-
-    if (isDefined(transformed.description) && !isArray(transformed.description))
-        transformed.description = [transformed.description];
 
     if (isDefined(transformed.color) && !isArray(transformed.color))
         transformed.color = [transformed.color];
