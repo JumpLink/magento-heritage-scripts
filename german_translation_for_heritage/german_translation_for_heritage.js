@@ -622,6 +622,9 @@ var backupAttachments = function (attachments) {
         for (var i = attachments.length; i--; ) {
             var file = path + "/" + attachments[i].filename;;
             var latestFile = path + "/" + attachments[i].filename;
+            console.log("file", file);
+            console.log("latestFile", latestFile);
+            console.log("(attachments[i]", attachments[i]);
             fs.outputFile(file, attachments[i].content, function(err) {
                 if(err) return console.log(err);
                 // overwrite old latestFile if exists
@@ -645,7 +648,7 @@ var sendMail = function (jsonObject, attachments, callback) {
 
     var mailOptions = config.mailoptions;
 
-    mailOptions.subject = "[unstable] "+mailOptions.subject+" "+moment().format('MMMM Do YYYY, h:mm:ss a'); // Subject line
+    mailOptions.subject = mailOptions.subject+" "+moment().format('MMMM Do YYYY, h:mm:ss a'); // Subject line
     
     mailOptions.attachments = attachments;
     
