@@ -26,6 +26,7 @@ csv/
 optimist/
 emailjs/
 simplesets/
+backup/
 
 vala/magento-heritage-scripts
 vala/*.c
