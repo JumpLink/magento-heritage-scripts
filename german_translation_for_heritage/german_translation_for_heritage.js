@@ -614,6 +614,7 @@ var generateAttachments = function (jsonObject, callback) {
     });
 }
 
+// TODO use async and callback
 var backupAttachments = function (attachments) {
     var path = config.backupAttachmentsPath;
     fs.ensureDir(path, function(err) {
@@ -665,8 +666,8 @@ splitShortDescription( function (error, results) {
     console.log(util.inspect(results, showHidden=false, depth=4, colorize=true));
     generateAttachments(results, function (error, attachments) {
         backupAttachments(attachments);
-        sendMail(results, attachments, function () {
-            
+        sendMail(results, attachments, function (error, info) {
+            console.log("done");
         });
     });
 
