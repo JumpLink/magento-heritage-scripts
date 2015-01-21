@@ -622,9 +622,10 @@ var backupAttachments = function (attachments) {
         for (var i = attachments.length; i--; ) {
             var file = path + "/" + attachments[i].filename;;
             var latestFile = path + "/" + attachments[i].filename;
+            console.log("i", i);
             console.log("file", file);
             console.log("latestFile", latestFile);
-            console.log("(attachments[i]", attachments[i]);
+            //console.log("(attachments[i]", attachments[i]);
             fs.outputFile(file, attachments[i].content, function(err) {
                 if(err) return console.log(err);
                 // overwrite old latestFile if exists
