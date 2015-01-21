@@ -621,7 +621,7 @@ var backupAttachments = function (attachments) {
         console.log(err) // => null
         for (var i = attachments.length; i--; ) {
             var file = path + "/" + attachments[i].filename;;
-            var latestFile = path + "/" + attachments[i].filename;
+            var latestFile = path + "/" + attachments[i].filenameLatest;
             console.log("i", i);
             console.log("file", file);
             console.log("latestFile", latestFile);
