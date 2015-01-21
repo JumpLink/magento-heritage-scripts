@@ -4,8 +4,9 @@
   "main": "german_translation_heritage.js",
   "dependencies": {
     "async": "0.7.*",
-    "easyxml": "0.0.*",
-    "ent": "0.1.*",
+    "easyxml": "^1.0.0",
+    "ent": "^2.2.0",
+    "fs-extra": "^0.14.0",
     "htmlparser2": "3.4.*",
     "json2csv": "git://github.com/JumpLink/json2csv",
     "moment": "2.5.*",

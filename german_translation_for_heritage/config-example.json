@@ -1,5 +1,6 @@
 {
 	"path": "/var/www/bugwelder-shop-mageplus/shell/JumpLink/Shell/API_Shell.php",
+	"backupAttachmentsPath": "./backup", 
 	"max_products": 50000,
 	"nodemailer": {
 		"transport": {
