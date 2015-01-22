@@ -332,7 +332,8 @@ var transformProductInfo = function (item, callback) {
         , technical_data: item.technical_data
         , unknown: item.unknown
         , manufacturer: item.manufacturer // FIXME fix magento api to get string of manufacturer and not id
-        , description: item.vwheritage_description // WORKAROUND VWHERITAGE
+        , description: null
+        , description_quality: null
         , scope_of_delivery: item.lieferumfang
         , color: item.color
         , material: item.material
@@ -345,8 +346,9 @@ var transformProductInfo = function (item, callback) {
     
     // remove html umlaute usw evtl wieder entfernen
     // getDatasOfDom funktoniert nur bei extrahierten werden aus transformed
-    if(!isArray(transformed.quality) && isDefined(transformed.quality))
+    if(!isArray(transformed.quality) && isDefined(transformed.quality)) {
         transformed.quality = removeWhitespaces(ent.decode(transformed.quality));
+    }    
     
     if(!isArray(transformed.applications) && isDefined(transformed.applications))
         transformed.applications = getDatasOfDom(transformed.applications);           // Passend für
@@ -391,21 +393,30 @@ var transformProductInfo = function (item, callback) {
         
     
     // description backports, vh_heritage description geht vor, sonst description, ansonsten short description 
-    if(isDefined(item.short_descriptionn) && item.short_description.length > 0)
+    if(isDefined(item.short_descriptionn) && item.short_description.length > 0) {
         transformed.description = item.short_description;
+        transformed.description_quality = 5;
+    }
     
-    if(isDefined(extracted.short_description) && extracted.short_description.length > 0)
+    if(isDefined(extracted.short_description) && extracted.short_description.length > 0) {
         transformed.description = extracted.short_description;
+        transformed.description_quality = 4;
+    }
     
-    if(isDefined(item.description) && item.description.length > 0) // description only if it is not defined
+    if(isDefined(item.description) && item.description.length > 0) { // description only if it is not defined
         transformed.description = item.description;
+        transformed.description_quality = 3;
+    }
 
-    if(isDefined(extracted.description) && extracted.description.length > 0) // description only if it is not defined
+    if(isDefined(extracted.description) && extracted.description.length > 0) { // description only if it is not defined
         transformed.description = extracted.description;
+        transformed.description_quality = 2;
+    }
         
-    if(isDefined(item.vwheritage_description) && item.vwheritage_description.length > 0) // description only if it is not defined
+    if(isDefined(item.vwheritage_description) && item.vwheritage_description.length > 0) {// description only if it is not defined
         transformed.description = item.vwheritage_description;
-        
+        transformed.description_quality = 1;
+    }        
         
         
         
@@ -415,13 +426,7 @@ var transformProductInfo = function (item, callback) {
         transformed.description = removeWhitespaces(ent.decode(S(transformed.description).stripTags().s))
     }
         
-    // WORKAROUND why description is an array?
-    // if(isArray(transformed.description) && isDefined(transformed.description))
-    //     transformed.description = transformed.description[0];
-        
-        
-        
-        
+
     // replace with values extracted from (short) description
     if(isDefined(extracted.unknown) && extracted.unknown.length > 0)
         transformed.unknown = extracted.unknown;
@@ -458,7 +463,43 @@ var transformProductInfo = function (item, callback) {
 
     if(isDefined(extracted.features) && extracted.features.length > 0)
         transformed.features = extracted.features;
-    
+
+
+    // if no array, make array
+    if (isDefined(transformed.unknown) && !isArray(transformed.unknown))
+        transformed.unknown = [transformed.unknown];
+
+    // if (isDefined(transformed.quality) && !isArray(transformed.quality))
+    //     transformed.quality = [transformed.quality];
+
+    if (isDefined(transformed.applications) && !isArray(transformed.applications))
+        transformed.applications = [transformed.applications];
+
+    if (isDefined(transformed.metrics) && !isArray(transformed.metrics))
+        transformed.metrics = [transformed.metrics];
+
+    if (isDefined(transformed.inst_position) && !isArray(transformed.inst_position))
+        transformed.inst_position = [transformed.inst_position];
+
+    if (isDefined(transformed.fittinginfo) && !isArray(transformed.fittinginfo))
+        transformed.fittinginfo = [transformed.fittinginfo];
+
+    if (isDefined(transformed.technical_data) && !isArray(transformed.technical_data))
+        transformed.technical_data = [transformed.technical_data];
+
+    if (isDefined(transformed.color) && !isArray(transformed.color))
+        transformed.color = [transformed.color];
+
+    if (isDefined(transformed.material) && !isArray(transformed.material))
+        transformed.material = [transformed.material];
+
+    if (isDefined(transformed.comment) && !isArray(transformed.comment))
+        transformed.comment = [transformed.comment];
+
+    if (isDefined(transformed.features) && !isArray(transformed.features))
+        transformed.features = [transformed.features];
+
+
 
     if (isEmpty(transformed.unknown))
         delete transformed.unknown;
@@ -508,41 +549,6 @@ var transformProductInfo = function (item, callback) {
 
 
 
-    // if no array, make array
-    if (isDefined(transformed.unknown) && !isArray(transformed.unknown))
-        transformed.unknown = [transformed.unknown];
-
-    // if (isDefined(transformed.quality) && !isArray(transformed.quality))
-    //     transformed.quality = [transformed.quality];
-
-    if (isDefined(transformed.applications) && !isArray(transformed.applications))
-        transformed.applications = [transformed.applications];
-
-    if (isDefined(transformed.metrics) && !isArray(transformed.metrics))
-        transformed.metrics = [transformed.metrics];
-
-    if (isDefined(transformed.inst_position) && !isArray(transformed.inst_position))
-        transformed.inst_position = [transformed.inst_position];
-
-    if (isDefined(transformed.fittinginfo) && !isArray(transformed.fittinginfo))
-        transformed.fittinginfo = [transformed.fittinginfo];
-
-    if (isDefined(transformed.technical_data) && !isArray(transformed.technical_data))
-        transformed.technical_data = [transformed.technical_data];
-
-    if (isDefined(transformed.color) && !isArray(transformed.color))
-        transformed.color = [transformed.color];
-
-    if (isDefined(transformed.material) && !isArray(transformed.material))
-        transformed.material = [transformed.material];
-
-    if (isDefined(transformed.comment) && !isArray(transformed.comment))
-        transformed.comment = [transformed.comment];
-
-    if (isDefined(transformed.features) && !isArray(transformed.features))
-        transformed.features = [transformed.features];
-
-
     // WORKAROUND VWHERITAGE
     delete transformed.unknown;
     delete transformed.inst_position;
@@ -567,7 +573,7 @@ var splitShortDescription = function (callback) {
         getProductList,
         function getEachProductInfo(items, callback) {
             async.setImmediate(function() {
-                async.mapLimit(items, 100, getProductInfo, callback);
+                async.mapLimit(items, config.parallel_processes_limit, getProductInfo, callback);
             });
         },
         function removeInactives(items, callback) {
@@ -603,7 +609,7 @@ var generateAttachments = function (jsonObject, callback) {
         }
     ];
     
-    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'manufacturer', 'description', 'description_html', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
+    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'manufacturer', 'description', 'description_html', 'description_quality', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
         if (err) callback(err);
         else {
             attachments.push({
