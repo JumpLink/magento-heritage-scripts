@@ -1,15 +1,15 @@
 var config = require(__dirname+"/config.json");
 
 var async = require(__dirname+'/node_modules/async');
-var htmlparser = require(__dirname+"/node_modules/htmlparser2"); // https://github.com/fb55/htmlparser2
-var util = require(__dirname+'/node_modules/util");
+var htmlparser = require(__dirname+'/node_modules/htmlparser2'); // https://github.com/fb55/htmlparser2
+var util = require('util');
 var ent = require(__dirname+'/node_modules/ent'); // hgt
 var moment = require(__dirname+'/node_modules/moment'); // http://momentjs.com/
 var EasyXml = require(__dirname+'/node_modules/easyxml'); // https://github.com/QuickenLoans/node-easyxml
 var json2csv = require(__dirname+'/node_modules/json2csv'); // https://github.com/zeMirco/json2csv
 var S = require(__dirname+'/node_modules/string');  // https://www.npmjs.com/package/sanitize-html
 var fs = require(__dirname+'/node_modules/fs-extra'); // https://github.com/jprichardson/node-fs-extra
-var nodemailer = require(__dirname+"/node_modules/nodemailer");                     // https://github.com/andris9/Nodemailer
+var nodemailer = require(__dirname+'/node_modules/nodemailer');                     // https://github.com/andris9/Nodemailer
 var request = require(__dirname+'/node_modules/request'); // just for http://www.icndb.com/api/ ;)
  
 var xmlSerializer = new EasyXml({
@@ -92,7 +92,7 @@ var getProductList = function (callback) {
 var getProductInfo = function (item, callback) {
 
     console.log(item);
-    var magento_shell_api = require(__dirname"/magento_shell_api.js")(config);
+    var magento_shell_api = require(__dirname+"/magento_shell_api.js")(config);
 
     var options = {
         method: 'product_export'
