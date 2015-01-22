@@ -60,6 +60,7 @@ var getJoke = function (callback) {
           console.log(text);
           return callback(null, body.value);
       } else {
+          console.log(error, body);
           return callback(error);
       }
     });
@@ -680,7 +681,7 @@ var sendMail = function (jsonObject, attachments, callback) {
     mailOptions.attachments = attachments;
     
     getJoke(function (error, data) {
-        if(!isDefined(error)) {
+        if(isDefined(data) && isDefined(data.joke) && isDefined(data.joke.html)) {
             mailOptions.text = data.joke.text;
             mailOptions.html = data.joke.html;
         }
