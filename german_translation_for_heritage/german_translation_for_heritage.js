@@ -68,7 +68,7 @@ var getJoke = function (callback) {
 
 var getProductList = function (callback) {
 
-    var magento_shell_api = require(__dirname+"/magento_shell_api.js")(config);
+    var magento_shell_api = require("./magento_shell_api.js")(config);
 
     var options = {
         method: 'product_items'
@@ -93,7 +93,7 @@ var getProductList = function (callback) {
 var getProductInfo = function (item, callback) {
 
     console.log(item);
-    var magento_shell_api = require(__dirname+"/magento_shell_api.js")(config);
+    var magento_shell_api = require("./magento_shell_api.js")(config);
 
     var options = {
         method: 'product_export'
