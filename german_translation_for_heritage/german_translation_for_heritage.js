@@ -51,7 +51,7 @@ var getJoke = function (callback) {
     request({ url: url, 'json': true} , function (error, response, body) {
       if (!error && response.statusCode == 200) {
           var html = body.value.joke;
-          var text = (S(html).decodeHTMLEntities().s;
+          var text = S(html).decodeHTMLEntities().s;
           body.value.joke = {
               html: html,
               text: text
@@ -582,9 +582,6 @@ var isActive = function (item, callback)  {
 
     // filter all products they are not activated (unactivated products are not translated)
     callback(item.status === 'activated');
-
-    // no filter
-    // callback(true)
 }
 
 var splitShortDescription = function (callback) {
@@ -666,25 +663,6 @@ var backupAttachments = function (attachments, callback) {
                 });
             });
         }, callback);
-        
-        // for (var i = attachments.length; i--; ) {
-        //     var file = path + "/" + attachments[i].filename;;
-        //     var latestFile = path + "/" + attachments[i].filenameLatest;
-        //     console.log("i", i);
-        //     console.log("file", file);
-        //     console.log("latestFile", latestFile);
-        //     //console.log("(attachments[i]", attachments[i]);
-        //     fs.outputFile(file, attachments[i].content, function(err) {
-        //         if(err) return console.log(err);
-        //         // overwrite old latestFile if exists
-        //         fs.remove(latestFile, function(err) {
-        //             if (err) return console.error(err)
-        //             fs.copy(file, latestFile, function(err) {
-        //               if (err) return console.error(err)
-        //             });
-        //         });
-        //     }); 
-        // }
     });
 
 }
