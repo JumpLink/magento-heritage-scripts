@@ -1,5 +1,5 @@
-var request = require('request');
-var S = require('string');
+var request = require(__dirname+'/node_modules/request');
+var S = require(__dirname+'/node_modules/string');
 
 var url = 'http://api.icndb.com/jokes/random';
 

@@ -1,15 +1,16 @@
-var config = require("./config.json");
+var config = require(__dirname+"/config.json");
 
-var async = require('async');
-var htmlparser = require("htmlparser2"); // https://github.com/fb55/htmlparser2
-var util = require("util");
-var ent = require('ent'); // hgt
-var moment = require('moment'); // http://momentjs.com/
-var EasyXml = require('easyxml'); // https://github.com/QuickenLoans/node-easyxml
-var json2csv = require('json2csv'); // https://github.com/zeMirco/json2csv
-var S = require('string');  // https://www.npmjs.com/package/sanitize-html
-var fs = require('fs-extra'); // https://github.com/jprichardson/node-fs-extra
-var request = require('request'); // just for http://www.icndb.com/api/ ;)
+var async = require(__dirname+'/node_modules/async');
+var htmlparser = require(__dirname+"/node_modules/htmlparser2"); // https://github.com/fb55/htmlparser2
+var util = require(__dirname+'/node_modules/util");
+var ent = require(__dirname+'/node_modules/ent'); // hgt
+var moment = require(__dirname+'/node_modules/moment'); // http://momentjs.com/
+var EasyXml = require(__dirname+'/node_modules/easyxml'); // https://github.com/QuickenLoans/node-easyxml
+var json2csv = require(__dirname+'/node_modules/json2csv'); // https://github.com/zeMirco/json2csv
+var S = require(__dirname+'/node_modules/string');  // https://www.npmjs.com/package/sanitize-html
+var fs = require(__dirname+'/node_modules/fs-extra'); // https://github.com/jprichardson/node-fs-extra
+var nodemailer = require(__dirname+"/node_modules/nodemailer");                     // https://github.com/andris9/Nodemailer
+var request = require(__dirname+'/node_modules/request'); // just for http://www.icndb.com/api/ ;)
  
 var xmlSerializer = new EasyXml({
     singularizeChildren: true,
@@ -66,7 +67,7 @@ var getJoke = function (callback) {
 
 var getProductList = function (callback) {
 
-    var magento_shell_api = require("./magento_shell_api.js")(config);
+    var magento_shell_api = require(__dirname+"/magento_shell_api.js")(config);
 
     var options = {
         method: 'product_items'
@@ -91,7 +92,7 @@ var getProductList = function (callback) {
 var getProductInfo = function (item, callback) {
 
     console.log(item);
-    var magento_shell_api = require("./magento_shell_api.js")(config);
+    var magento_shell_api = require(__dirname"/magento_shell_api.js")(config);
 
     var options = {
         method: 'product_export'
@@ -670,8 +671,6 @@ var backupAttachments = function (attachments, callback) {
 
 
 var sendMail = function (jsonObject, attachments, callback) {
-
-    var nodemailer = require("nodemailer");                     // https://github.com/andris9/Nodemailer
     var mailTransport = nodemailer.createTransport(config.nodemailer.transport);
 
     var mailOptions = config.mailoptions;
