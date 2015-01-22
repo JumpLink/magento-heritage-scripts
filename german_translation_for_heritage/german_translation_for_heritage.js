@@ -567,7 +567,7 @@ var splitShortDescription = function (callback) {
         getProductList,
         function getEachProductInfo(items, callback) {
             async.setImmediate(function() {
-                async.map(items, getProductInfo, callback);
+                async.mapLimit(items, 100, getProductInfo, callback);
             });
         },
         function removeInactives(items, callback) {
