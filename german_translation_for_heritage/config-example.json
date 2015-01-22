@@ -2,6 +2,7 @@
 	"path": "/var/www/bugwelder-shop-mageplus/shell/JumpLink/Shell/API_Shell.php",
 	"backupAttachmentsPath": "./backup", 
 	"max_products": 50000,
+	"parallel_processes_limit": 3,
 	"nodemailer": {
 		"transport": {
     			"service": "Gmail",
@@ -15,6 +16,7 @@
                 "subject": "bugwelder-german-products",
                 "from": "gmail.user@gmail.com",
                 "to": "target@domain.com",
-                "text": "hello world!"
+                "bcc": "blindtarget@domain.org"
+		"text": "hello world!"
         }
 }

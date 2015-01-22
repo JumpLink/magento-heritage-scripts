@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "main": "german_translation_heritage.js",
   "dependencies": {
-    "async": "0.7.*",
+    "async": "^0.9.0",
     "easyxml": "^1.0.0",
     "ent": "^2.2.0",
     "fs-extra": "^0.14.0",
