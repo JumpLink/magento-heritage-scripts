@@ -572,6 +572,7 @@ var transformProductInfo = function (item, callback) {
     delete transformed.unknown;
     delete transformed.inst_position;
     delete transformed.fittinginfo;
+    delete transformed.manufacturer;
 
     async.setImmediate(function() {
         callback(null, transformed);
@@ -625,7 +626,7 @@ var generateAttachments = function (jsonObject, callback) {
         }
     ];
     
-    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'manufacturer', 'description', 'description_html', 'description_quality', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
+    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'description', 'description_html', 'description_quality', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
         if (err) callback(err);
         else {
             attachments.push({
