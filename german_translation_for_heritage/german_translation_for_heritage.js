@@ -9,6 +9,7 @@ var EasyXml = require('easyxml'); // https://github.com/QuickenLoans/node-easyxm
 var json2csv = require('json2csv'); // https://github.com/zeMirco/json2csv
 var S = require('string');  // https://www.npmjs.com/package/sanitize-html
 var fs = require('fs-extra'); // https://github.com/jprichardson/node-fs-extra
+var request = require('request'); // just for http://www.icndb.com/api/ ;)
  
 var xmlSerializer = new EasyXml({
     singularizeChildren: true,
@@ -40,9 +41,27 @@ var isEmpty = function(value) {
     }
 }
 
-
 var contains = function (str, substring) {
     return str.indexOf(substring) != -1;
+}
+
+var getJoke = function (callback) {
+    var url = 'http://api.icndb.com/jokes/random';
+    
+    request({ url: url, 'json': true} , function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+          var html = body.value.joke;
+          var text = (S(html).decodeHTMLEntities().s;
+          body.value.joke = {
+              html: html,
+              text: text
+          }
+          console.log(text);
+          return callback(null, body.value);
+      } else {
+          return callback(error);
+      }
+    });
 }
 
 var getProductList = function (callback) {
@@ -682,17 +701,22 @@ var sendMail = function (jsonObject, attachments, callback) {
     
     mailOptions.attachments = attachments;
     
-    mailTransport.sendMail(mailOptions, function(error, info){
-        if(error) return callback(error);
-
-        // if you don't want to use this transport object anymore, uncomment following line
-        mailTransport.close(function(error) {
+    getJoke(function (error, data) {
+        if(!isDefined(error)) {
+            mailOptions.text = data.joke.text;
+            mailOptions.html = data.joke.html;
+        }
+        mailTransport.sendMail(mailOptions, function(error, info){
             if(error) return callback(error);
-            callback (null, info);
-        }); // shut down the connection pool, no more messages
+    
+            // if you don't want to use this transport object anymore, uncomment following line
+            mailTransport.close(function(error) {
+                if(error) return callback(error);
+                callback (null, info);
+            }); // shut down the connection pool, no more messages
+        });
     });
-        
-
+    
 }
 
 splitShortDescription( function (error, results) {
