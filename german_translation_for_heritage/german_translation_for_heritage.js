@@ -548,7 +548,9 @@ var transformProductInfo = function (item, callback) {
     delete transformed.inst_position;
     delete transformed.fittinginfo;
 
-    callback(null, transformed);
+    async.setImmediate(function() {
+        callback(null, transformed);
+    });
 }
 
 var isActive = function (item, callback)  {
@@ -564,18 +566,18 @@ var splitShortDescription = function (callback) {
     async.waterfall([
         getProductList,
         function getEachProductInfo(items, callback) {
-            process.nextTick(function() {
-                async.mapSeries(items, getProductInfo, callback);
+            async.setImmediate(function() {
+                async.map(items, getProductInfo, callback);
             });
         },
         function removeInactives(items, callback) {
-            process.nextTick(function() {
-                async.filterSeries(items, isActive, function(results){callback(null, results)});
+            async.setImmediate(function() {
+                async.filter(items, isActive, function(results){callback(null, results)});
             });
         },
         function transformEach(items, callback) {
-            process.nextTick(function() {
-                async.mapSeries(items, transformProductInfo, callback);
+            async.setImmediate(function() {
+                async.map(items, transformProductInfo, callback);
             });
         }
     ], function (err, results) {
