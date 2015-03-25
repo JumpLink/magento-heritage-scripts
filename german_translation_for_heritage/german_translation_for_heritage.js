@@ -705,7 +705,8 @@ splitShortDescription( function (error, results) {
         backupAttachments(attachments, function (err) {
             if(err) console.error(err);
             sendMail(results, attachments, function (error, info) {
-                console.log("done");
+                if(error) console.log(error);
+		console.log("done");
             });
         });
     });
