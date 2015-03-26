@@ -11,7 +11,10 @@ var S = require(__dirname+'/node_modules/string');  // https://www.npmjs.com/pac
 var fs = require(__dirname+'/node_modules/fs-extra'); // https://github.com/jprichardson/node-fs-extra
 var nodemailer = require(__dirname+'/node_modules/nodemailer');                     // https://github.com/andris9/Nodemailer
 var request = require(__dirname+'/node_modules/request'); // just for http://www.icndb.com/api/ ;)
- 
+var zip = new require('node-zip')();
+var zlib = require('zlib');
+var gzip = zlib.createGzip();
+
 var xmlSerializer = new EasyXml({
     singularizeChildren: true,
     allowAttributes: true,
@@ -610,66 +613,114 @@ var splitShortDescription = function (callback) {
     });
 }
 
+
+var zipAttachments = function (attachments, callback) {
+
+    for (var i = attachments.length - 1; i >= 0; i--) {
+        zip.file(attachments[i].filename, attachments[i].content);
+    };
+
+    var filename = "bugwelder-german-"+moment().format();
+    var filenameLatest = "bugwelder-german-latest";
+    var data = zip.generate({base64:false,compression:'DEFLATE'});
+    var newAttachments = [
+        {   
+            filename: filename+".zip",
+            name: filename+".zip",
+            filenameLatest: filenameLatest+".zip",
+            content:  data,
+            contentType: 'application/zip',
+            type: 'application/zip'
+        }
+    ];
+    console.log("zipped");
+    callback(null, newAttachments);
+}
+
 var generateAttachments = function (jsonObject, callback) {
     var filename = "bugwelder-german-"+moment().format();
     var filenameLatest = "bugwelder-german-latest";
-    var attachments = [
-        {   // utf-8 string as an attachment
+    var attachments = [];
+    if(config.attachments.json) {
+        attachments.push({
             filename: filename+".json",
+            name: filename+".json",
             filenameLatest: filenameLatest+".json",
             content:  JSON.stringify(jsonObject, null, 2),
-            contentType: 'application/json'
-        },
-        {   // utf-8 string as an attachment
+            contentType: 'application/json',
+            type: 'application/json'
+        });
+    }
+    if(config.attachments.xml) {
+        attachments.push({
             filename: filename+".xml",
+            name: filename+".xml",
             filenameLatest: filenameLatest+".xml",
             content: xmlSerializer.render(jsonObject),
-            contentType: 'application/xml'
-        }
-    ];
-    
-    json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'description', 'description_html', 'description_quality', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
-        if (err) callback(err);
-        else {
-            attachments.push({
-                filename: filename+".csv",
-                filenameLatest: filenameLatest+".csv",
-                content: csv,
-                contentType: 'text/csv'
-                
-            });
-            callback(null, attachments);
-        }
-    });
+            contentType: 'application/xml',
+            type: 'application/xml'
+        });
+    }
+    if(config.attachments.csv) {
+        json2csv({joinArray: true, data: jsonObject, fields: ['id', 'sku', 'sku_clean', 'name', 'quality', 'applications', 'metrics', 'technical_data', 'description', 'description_html', 'description_quality', 'scope_of_delivery', 'color', 'material', 'comment', 'features'  ]}, function(err, csv) {
+            if (err) callback(err);
+            else {
+                attachments.push({
+                    filename: filename+".csv",
+                    name: filename+".csv",
+                    filenameLatest: filenameLatest+".csv",
+                    content: csv,
+                    contentType: 'text/csv',
+                    type: 'text/csv'
+                    
+                });
+                callback(null, attachments);
+            }
+        });
+    } else {
+        callback(null, attachments);
+    }
 }
 
 // TODO use async and callback
 var backupAttachments = function (attachments, callback) {
     var path = config.backupAttachmentsPath;
     fs.ensureDir(path, function(err) {
-        console.log(err) // => null
+        if(err) console.log(err) // => null
         
         async.each(attachments, function(attachment, callback) {
             var file = path + "/" + attachment.filename;;
             var latestFile = path + "/" + attachment.filenameLatest;
             console.log("file", file);
             console.log("latestFile", latestFile);
-            fs.outputFile(file, attachment.content, function(err) {
-                if(err) return callback(err);
-                // overwrite old latestFile if exists
-                fs.remove(latestFile, function(err) {
-                    if (err) return callback(err);
-                    fs.copy(file, latestFile, function(err) {
-                      if (err) return callback(err);
-                      callback(null);
+            if(attachment.contentType == "application/zip") {
+                fs.writeFile(file, attachment.content, 'binary', function (err) {
+                    if(err) return callback(err);
+                    fs.remove(latestFile, function(err) {
+                        if (err) return callback(err);
+                        fs.copy(file, latestFile, function(err) {
+                          if (err) return callback(err);
+                          callback(null);
+                        });
                     });
                 });
-            });
+            } else {
+                fs.outputFile(file, attachment.content, function(err) {
+                    if(err) return callback(err);
+                    // overwrite old latestFile if exists
+                    fs.remove(latestFile, function(err) {
+                        if (err) return callback(err);
+                        fs.copy(file, latestFile, function(err) {
+                          if (err) return callback(err);
+                          callback(null);
+                        });
+                    });
+                });
+            } 
+
         }, callback);
     });
-
 }
-
 
 var sendMail = function (jsonObject, attachments, callback) {
     var mailTransport = nodemailer.createTransport(config.nodemailer.transport);
@@ -681,6 +732,7 @@ var sendMail = function (jsonObject, attachments, callback) {
     mailOptions.attachments = attachments;
     
     getJoke(function (error, data) {
+        if(error) return callback(error);
         if(isDefined(data) && isDefined(data.joke) && isDefined(data.joke.html)) {
             mailOptions.text = data.joke.text;
             mailOptions.html = data.joke.html;
@@ -698,16 +750,31 @@ var sendMail = function (jsonObject, attachments, callback) {
     
 }
 
-splitShortDescription( function (error, results) {
-    console.log(util.inspect(error, showHidden=false, depth=4, colorize=false));
-    console.log(util.inspect(results, showHidden=false, depth=4, colorize=true));
-    generateAttachments(results, function (error, attachments) {
-        backupAttachments(attachments, function (err) {
+splitShortDescription( function (err, results) {
+    if(err) console.log(util.inspect(err, showHidden=false, depth=4, colorize=false));
+    // console.log(util.inspect(results, showHidden=false, depth=4, colorize=true));
+    generateAttachments(results, function (err, attachments) {
+        if(err) console.error(err);
+        if(config.attachments.compress) {
             if(err) console.error(err);
-            sendMail(results, attachments, function (error, info) {
-                console.log("done");
+            zipAttachments(attachments, function (err, zippedAttachments) {
+                backupAttachments(zippedAttachments, function (err) {
+                    if(err) console.error(err);
+                    sendMail(results, zippedAttachments, function (err, info) {
+                        if(err) console.error(err);
+                        console.log("done");
+                    });
+                });
             });
-        });
+        } else {
+            backupAttachments(attachments, function (err) {
+                if(err) console.error(err);
+                sendMail(results, attachments, function (err, info) {
+                    if(err) console.error(err);
+                    console.log("done");
+                });
+            });
+        }
     });
 
 });

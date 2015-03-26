@@ -10,7 +10,8 @@
     "htmlparser2": "3.4.*",
     "json2csv": "git://github.com/JumpLink/json2csv",
     "moment": "2.5.*",
-    "nodemailer": "^1.3.0",
+    "node-zip": "^1.1.0",
+    "nodemailer": "^1.3.2",
     "request": "^2.51.0",
     "string": "^3.0.0"
   },
