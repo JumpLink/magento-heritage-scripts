@@ -94,7 +94,7 @@ function send_mail_with_sku_equality() {
 	var heritage_only_csv = array_to_csv("sku", heritage_skus_only_set.array() );
 	var magento_only_csv = array_to_csv("sku", magento_skus_only_set.array() );
 	var message = {
-		text:    "Hallo Christopher, ich sende dir hiermit zwei csv-Tabellen, die eine mit den SKUs die nur bei Heritage und die andere die nur bei Bugwelder enthalten sind. Bitte überprüfe diese Manuel!\n\nDein Bot!\n\nP.S. Gib Pascal doch mal ein Bier aus.",
+		text:    "Hallo Christopher, ich sende dir hiermit zwei csv-Tabellen, die eine mit den SKUs die nur bei Heritage und die andere die nur bei Bugwelder enthalten sind. Bitte überprüfe diese manuell!\n\nDein Bot!\n\nP.S. Gib Pascal doch mal ein Bier aus.",
 		from:    "Bugwelder System <system@bugwelder.com>",
 		to:      "Christopher Heinecke <christopher@bugwelder.com>",
 		subject: "Bitte überprüfe die Produkt-SKUs!",
@@ -110,7 +110,7 @@ function send_mail_with_sku_equality() {
 
 function send_mail_with_price_equality() {
 	var message = {
-		text:    "Hallo Christopher, Es unterscheiden sich Preise. Bitte überprüfe diese Manuel (siehe Anhang)!\n\nDein Bot!\n\nP.S. Gib Pascal doch mal ein Snickers aus.",
+		text:    "Hallo Christopher, Es unterscheiden sich Preise. Bitte überprüfe diese manuell (siehe Anhang)!\n\nDein Bot!\n\nP.S. Gib Pascal doch mal ein Snickers aus.",
 		from:    "Bugwelder System <system@bugwelder.com>",
 		to:      "Christopher Heinecke <christopher@bugwelder.com>",
 		subject: "Achtung überprüfe die Produktpreise!",
