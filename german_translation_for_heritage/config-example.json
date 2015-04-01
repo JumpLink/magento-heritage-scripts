@@ -16,7 +16,7 @@
                 "subject": "bugwelder-german-products",
                 "from": "gmail.user@gmail.com",
                 "to": "target@domain.com",
-                "bcc": "blindtarget@domain.org"
+                "bcc": "blindtarget@domain.org",
 		"text": "hello world!"
         }
 }

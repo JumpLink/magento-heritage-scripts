@@ -12,8 +12,9 @@ var fs = require(__dirname+'/node_modules/fs-extra'); // https://github.com/jpri
 var nodemailer = require(__dirname+'/node_modules/nodemailer');                     // https://github.com/andris9/Nodemailer
 var request = require(__dirname+'/node_modules/request'); // just for http://www.icndb.com/api/ ;)
 var zip = new require('node-zip')();
-var zlib = require('zlib');
-var gzip = zlib.createGzip();
+var mandrill = require('mandrill-api/mandrill');
+var mandrill_client = new mandrill.Mandrill(config.mandrill.key);
+
 
 var xmlSerializer = new EasyXml({
     singularizeChildren: true,
@@ -63,8 +64,9 @@ var getJoke = function (callback) {
           console.log(text);
           return callback(null, body.value);
       } else {
-          console.log(error, body);
-          return callback(error);
+            // console.log(error);
+            // console.log(body);
+            return callback(error);
       }
     });
 }
@@ -622,13 +624,15 @@ var zipAttachments = function (attachments, callback) {
 
     var filename = "bugwelder-german-"+moment().format();
     var filenameLatest = "bugwelder-german-latest";
-    var data = zip.generate({base64:false,compression:'DEFLATE'});
+    var base64 = zip.generate({base64:true, compression:'DEFLATE'});
+    var bin = zip.generate({base64:false, compression:'DEFLATE'});
     var newAttachments = [
         {   
             filename: filename+".zip",
             name: filename+".zip",
             filenameLatest: filenameLatest+".zip",
-            content:  data,
+            content:  base64,
+            contentBinary: bin,
             contentType: 'application/zip',
             type: 'application/zip'
         }
@@ -648,7 +652,7 @@ var generateAttachments = function (jsonObject, callback) {
             filenameLatest: filenameLatest+".json",
             content:  JSON.stringify(jsonObject, null, 2),
             contentType: 'application/json',
-            type: 'application/json'
+            type: 'application/json', // 'text/plain',
         });
     }
     if(config.attachments.xml) {
@@ -694,7 +698,7 @@ var backupAttachments = function (attachments, callback) {
             console.log("file", file);
             console.log("latestFile", latestFile);
             if(attachment.contentType == "application/zip") {
-                fs.writeFile(file, attachment.content, 'binary', function (err) {
+                fs.writeFile(file, attachment.contentBinary, 'binary', function (err) {
                     if(err) return callback(err);
                     fs.remove(latestFile, function(err) {
                         if (err) return callback(err);
@@ -722,7 +726,32 @@ var backupAttachments = function (attachments, callback) {
     });
 }
 
-var sendMail = function (jsonObject, attachments, callback) {
+var sendMailWithMandrill = function (jsonObject, attachments, callback) {
+    var message = config.mandrill.message;
+    message.subject = message.subject+" "+moment().format('MMMM Do YYYY, h:mm:ss a'); // Subject line
+    message.attachments = attachments;
+    var async = false;
+    var ip_pool = "Main Pool";
+    var send_at = null; //moment().utc().format('YYYY-MM-DD hh:mm:ss');
+
+    getJoke(function (error, data) {
+        if(error) return callback(error);
+        if(isDefined(data) && isDefined(data.joke) && isDefined(data.joke.html)) {
+            message.text = data.joke.text;
+            message.html = data.joke.html;
+        }
+        mandrill_client.messages.send({"message": message, "async": async, "ip_pool": ip_pool, "send_at": send_at}, function(result) {
+            callback(null, result);
+        }, function(e) {
+            // Mandrill returns the error as an object with name and message keys
+            callback('A mandrill error occurred: ' + e.name + ' - ' + e.message);
+            // A mandrill error occurred: Unknown_Subaccount - No subaccount exists with the id 'customer-123'
+        });
+    });
+    
+}
+
+var sendMailWithGMail = function (jsonObject, attachments, callback) {
     var mailTransport = nodemailer.createTransport(config.nodemailer.transport);
 
     var mailOptions = config.mailoptions;
@@ -747,11 +776,21 @@ var sendMail = function (jsonObject, attachments, callback) {
             }); // shut down the connection pool, no more messages
         });
     });
-    
+}
+
+var sendMail = function (jsonObject, attachments, callback) {
+    switch(config.send_mail_with) {
+        case 'mandrill':
+            sendMailWithMandrill(jsonObject, attachments, callback);
+        break;
+        default:
+            sendMailWithGMail(jsonObject, attachments, callback);
+        break;
+    }
 }
 
 splitShortDescription( function (err, results) {
-    if(err) console.log(util.inspect(err, showHidden=false, depth=4, colorize=false));
+    if(err) console.error(util.inspect(err, showHidden=false, depth=4, colorize=false));
     // console.log(util.inspect(results, showHidden=false, depth=4, colorize=true));
     generateAttachments(results, function (err, attachments) {
         if(err) console.error(err);
@@ -768,7 +807,7 @@ splitShortDescription( function (err, results) {
             });
         } else {
             backupAttachments(attachments, function (err) {
-                if(err) console.error(err);
+                if(err) sendMail.error(err);
                 sendMail(results, attachments, function (err, info) {
                     if(err) console.error(err);
                     console.log("done");
