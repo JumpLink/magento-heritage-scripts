@@ -24,7 +24,7 @@ var argv = require('optimist')
  * magentobug: magento sets all attributes wit a defaultvalue to the defaultvalue: https://plus.google.com/111468575764025343400/posts/BvtYDPyoDw6
  * WORKAROUND for the magentobug: forward the attrbutes e.g. manufacturer
  */
-var stock_csv_file = '"sku","sku_clean","vwh_id","_type","_attribute_set","_store","stock_vwheritage_availabilitymessagecode","stock_vwheritage_dueweeks","stock_vwheritage_qty","stock_strichweg_qty","qty","is_in_stock","vwheritage_price_pound","manufacturer","special_order"\r\n';
+var stock_csv_file = '"sku","sku_clean","vwh_id","_type","_attribute_set","_store","stock_vwheritage_availabilitymessagecode","stock_vwheritage_dueweeks","stock_vwheritage_qty","stock_strichweg_qty","qty","is_in_stock","vwheritage_price_pound","special_order"\r\n';
 var price_changes_csv_file = '"sku","old_price","new_price","new_price_in_pount"\r\n';
 var heritage_data;
 var heritage_skus_set;
@@ -48,17 +48,25 @@ function import_heritage_data_in_parts(cb) {
 	heritage.auto.catalog.product.list(function(data) {
 		console.log("list.length: "+data.CODE.length);
 		heritage.auto.catalog.product.infos( data.CODE, function(data) {
-			heritage_data = data;
-			heritage_skus_set = new sets.Set(heritage_data["sku"]);
-			cb();
+			if(data != null) {
+				heritage_data = data;
+				heritage_skus_set = new sets.Set(heritage_data["sku"]);
+				cb();
+			} else {
+				heritage_data = data;
+				console.warn("data is null!");
+				cb();
+			}
 		});
 	});
 }
 
 function get_index_from_heritage_attribute(name, value) {
-	for (var i = 0; i < heritage_data[name].length; i++) {
-		if(heritage_data[name][i] == value) {
-			return i;
+	if(heritage_data != null) {
+		for (var i = 0; i < heritage_data[name].length; i++) {
+			if(heritage_data[name][i] == value) {
+				return i;
+			}
 		}
 	}
 	return -1;
@@ -168,8 +176,8 @@ import_heritage_data_in_parts(function() {
 			var vwheritage_price_pound = precise_round( get_price_or_null(heritage_data["COSTPRICE"][i]), 2 );
 			var manufacturer = row.manufacturer;
 			//var special_order = row.special_order;
-			var special_order = heritage_data["SPECIALORDER"][i] == 'y' && qty > 0 ? 'yes' : 'no'; // Nur special order wenn keine Produkte auf Lager sind
-			var new_line = '"'+sku+'","'+sku_clean+'","'+vwh_id+'","'+_type+'","'+_attribute_set+'","'+_store+'","'+stock_vwheritage_availabilitymessagecode+'","'+stock_vwheritage_dueweeks+'","'+stock_vwheritage_qty+'","'+stock_strichweg_qty+'","'+qty+'","'+is_in_stock+'","'+vwheritage_price_pound+'","'+manufacturer+'","'+special_order+'"\r\n';
+			var special_order = heritage_data["SPECIALORDER"][i] == 'y' && stock_strichweg_qty <= 0 ? 'yes' : 'no'; // Nur special order wenn keine Produkte auf Lager sind
+			var new_line = '"'+sku+'","'+sku_clean+'","'+vwh_id+'","'+_type+'","'+_attribute_set+'","'+_store+'","'+stock_vwheritage_availabilitymessagecode+'","'+stock_vwheritage_dueweeks+'","'+stock_vwheritage_qty+'","'+stock_strichweg_qty+'","'+qty+'","'+is_in_stock+'","'+vwheritage_price_pound+'","'+special_order+'"\r\n';
 			stock_csv_file += new_line;
 
 			var new_cost_price = precise_round( vwheritage_price_pound*EURO, 2);
