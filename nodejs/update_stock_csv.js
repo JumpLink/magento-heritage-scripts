@@ -45,7 +45,12 @@ function save_csv_file(string_to_save, filename) {
 }
 
 function import_heritage_data_in_parts(cb) {
-	heritage.auto.catalog.product.list(function(data) {
+	heritage.auto.catalog.product.list(function(err, data) {
+		if(err) return cb(err);
+		if(typeof(data) === 'undefined' || data === null) {
+			console.log("Error: data not set");
+			return cb("Error: data not set")
+		}
 		console.log("list.length: "+data.CODE.length);
 		heritage.auto.catalog.product.infos( data.CODE, function(data) {
 			if(data != null) {
