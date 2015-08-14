@@ -181,7 +181,7 @@ import_heritage_data_in_parts(function() {
 			var vwheritage_price_pound = precise_round( get_price_or_null(heritage_data["COSTPRICE"][i]), 2 );
 			var manufacturer = row.manufacturer;
 			//var special_order = row.special_order;
-			var special_order = heritage_data["SPECIALORDER"][i] == 'y' && stock_strichweg_qty <= 0 ? 'yes' : 'no'; // Nur special order wenn keine Produkte auf Lager sind
+			var special_order = (heritage_data["SPECIALORDER"][i] == 'y' || heritage_data["SPECIALORDER"][i] == true )  && stock_strichweg_qty <= 0 ? 1 : 0; // Nur special order wenn keine Produkte auf Lager sind	
 			var new_line = '"'+sku+'","'+sku_clean+'","'+vwh_id+'","'+_type+'","'+_attribute_set+'","'+_store+'","'+stock_vwheritage_availabilitymessagecode+'","'+stock_vwheritage_dueweeks+'","'+stock_vwheritage_qty+'","'+stock_strichweg_qty+'","'+qty+'","'+is_in_stock+'","'+vwheritage_price_pound+'","'+special_order+'"\r\n';
 			stock_csv_file += new_line;
 
