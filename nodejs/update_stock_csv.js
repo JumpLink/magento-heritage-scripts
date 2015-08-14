@@ -177,7 +177,8 @@ import_heritage_data_in_parts(function() {
 			var stock_vwheritage_qty = get_number_or_null(heritage_data["FREESTOCKQUANTITY"][i]);
 			var stock_strichweg_qty = get_number_or_null(row.stock_strichweg_qty);
 			var qty = stock_vwheritage_qty + stock_strichweg_qty;
-			var is_in_stock = qty > 0 ? 1 : 0;
+			// var is_in_stock = qty > 0 ? 1 : 0;
+			var is_in_stock = 1;
 			var vwheritage_price_pound = precise_round( get_price_or_null(heritage_data["COSTPRICE"][i]), 2 );
 			var manufacturer = row.manufacturer;
 			//var special_order = row.special_order;
