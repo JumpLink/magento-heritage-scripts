@@ -30,181 +30,181 @@ var heritage_data;
 var heritage_skus_set;
 var magento_skus_set = new sets.Set();
 var MWST = 1.19; // VAT
-var EURO = 1.25;
+var EURO = 1.3;
 var magento_csv_filename  = argv.source;
 var result_csv_filename = argv.output;
 
 function save_csv_file(string_to_save, filename) {
-	fs.writeFile(filename, string_to_save, function(err) {
-		if(err) {
-			console.log(err);
-		} else {
-			console.log("The file was saved!");
-		}
-	});
+  fs.writeFile(filename, string_to_save, function(err) {
+    if(err) {
+      console.log(err);
+    } else {
+      console.log("The file was saved!");
+    }
+  });
 }
 
 function import_heritage_data_in_parts(cb) {
-	heritage.auto.catalog.product.list(function(err, data) {
-		if(err) return cb(err);
-		if(typeof(data) === 'undefined' || data === null) {
-			console.log("Error: data not set");
-			return cb("Error: data not set")
-		}
-		console.log("list.length: "+data.CODE.length);
-		heritage.auto.catalog.product.infos( data.CODE, function(data) {
-			if(data != null) {
-				heritage_data = data;
-				heritage_skus_set = new sets.Set(heritage_data["sku"]);
-				cb();
-			} else {
-				heritage_data = data;
-				console.warn("data is null!");
-				cb();
-			}
-		});
-	});
+  heritage.auto.catalog.product.list(function(err, data) {
+    if(err) return cb(err);
+    if(typeof(data) === 'undefined' || data === null) {
+      console.log("Error: data not set");
+      return cb("Error: data not set");
+    }
+    console.log("list.length: "+data.CODE.length);
+    heritage.auto.catalog.product.infos( data.CODE, function(data) {
+      if(data !== null) {
+        heritage_data = data;
+        heritage_skus_set = new sets.Set(heritage_data.sku);
+        cb();
+      } else {
+        heritage_data = data;
+        console.warn("data is null!");
+        cb();
+      }
+    });
+  });
 }
 
 function get_index_from_heritage_attribute(name, value) {
-	if(heritage_data != null) {
-		for (var i = 0; i < heritage_data[name].length; i++) {
-			if(heritage_data[name][i] == value) {
-				return i;
-			}
-		}
-	}
-	return -1;
+  if(heritage_data !== null) {
+    for (var i = 0; i < heritage_data[name].length; i++) {
+      if(heritage_data[name][i] == value) {
+        return i;
+      }
+    }
+  }
+  return -1;
 }
 
 function get_number_or_null(value) {
-	var tmp_number = parseInt(value,10);
-	if ( isNaN(tmp_number) ) {
-		return 0;
-	}
-	return tmp_number;
+  var tmp_number = parseInt(value,10);
+  if ( isNaN(tmp_number) ) {
+    return 0;
+  }
+  return tmp_number;
 }
 
 function get_price_or_null(value) {
-	var tmp_number = parseFloat(value,10);
-	if ( isNaN(tmp_number) ) {
-		return 0;
-	}
-	return tmp_number;
+  var tmp_number = parseFloat(value,10);
+  if ( isNaN(tmp_number) ) {
+    return 0;
+  }
+  return tmp_number;
 }
 
 function array_to_csv(name, array) {
-	var result = '"'+name+'"'+"\r\n";
-	for (var i = 0; i < array.length; i++) {
-		result += '"'+array[i]+'"\r\n';
-	}
-	return result;
+  var result = '"'+name+'"'+"\r\n";
+  for (var i = 0; i < array.length; i++) {
+    result += '"'+array[i]+'"\r\n';
+  }
+  return result;
 }
 
 function send_mail_with_sku_equality() {
-	var heritage_skus_only_set = heritage_skus_set.difference(magento_skus_set);
-	var magento_skus_only_set = magento_skus_set.difference(heritage_skus_set);
-	var heritage_only_csv = array_to_csv("sku", heritage_skus_only_set.array() );
-	var magento_only_csv = array_to_csv("sku", magento_skus_only_set.array() );
-	var message = {
-		text:    "Hallo Christopher, ich sende dir hiermit zwei csv-Tabellen, die eine mit den SKUs die nur bei Heritage und die andere die nur bei Bugwelder enthalten sind. Bitte überprüfe diese manuell!\n\nDein Bot!\n\nP.S. Gib Pascal doch mal ein Bier aus.",
-		from:    "Bugwelder System <system@bugwelder.com>",
-		to:      "Christopher Heinecke <christopher@bugwelder.com>",
-		subject: "Bitte überprüfe die Produkt-SKUs!",
-		attachment:
-		[
-			{data:heritage_only_csv, alternative:false, name:"heritage_only.csv"},
-			{data:magento_only_csv, alternative:false, name:"magento_only.csv"}
-		]
-	};
-	var server  = email.server.connect(config.gmail);
-	server.send(message, function(err, message) { console.log(err || message); });
+  var heritage_skus_only_set = heritage_skus_set.difference(magento_skus_set);
+  var magento_skus_only_set = magento_skus_set.difference(heritage_skus_set);
+  var heritage_only_csv = array_to_csv("sku", heritage_skus_only_set.array() );
+  var magento_only_csv = array_to_csv("sku", magento_skus_only_set.array() );
+  var message = {
+    text:    "Hallo Christopher, ich sende dir hiermit zwei csv-Tabellen, die eine mit den SKUs die nur bei Heritage und die andere die nur bei Bugwelder enthalten sind. Bitte überprüfe diese manuell!\n\nDein Bot!\n\nP.S. Gib Pascal doch mal ein Bier aus.",
+    from:    "Bugwelder System <system@bugwelder.com>",
+    to:      "Christopher Heinecke <christopher@bugwelder.com>",
+    subject: "Bitte überprüfe die Produkt-SKUs!",
+    attachment:
+    [
+      {data:heritage_only_csv, alternative:false, name:"heritage_only.csv"},
+      {data:magento_only_csv, alternative:false, name:"magento_only.csv"}
+    ]
+  };
+  var server  = email.server.connect(config.gmail);
+  server.send(message, function(err, message) { console.log(err || message); });
 }
 
 function send_mail_with_price_equality() {
-	var message = {
-		text:    "Hallo Christopher, Es unterscheiden sich Preise. Bitte überprüfe diese manuell (siehe Anhang)!\n\nDein Bot!\n\nP.S. Gib Pascal doch mal ein Snickers aus.",
-		from:    "Bugwelder System <system@bugwelder.com>",
-		to:      "Christopher Heinecke <christopher@bugwelder.com>",
-		subject: "Achtung überprüfe die Produktpreise!",
-		attachment:
-		[
-			{data:price_changes_csv_file, alternative:false, name:"price_changes.csv"}
-		]
-	};
-	var server  = email.server.connect(config.gmail);
-	server.send(message, function(err, message) { console.log(err || message); });
+  var message = {
+    text:    "Hallo Christopher, Es unterscheiden sich Preise. Bitte überprüfe diese manuell (siehe Anhang)!\n\nDein Bot!\n\nP.S. Gib Pascal doch mal ein Snickers aus.",
+    from:    "Bugwelder System <system@bugwelder.com>",
+    to:      "Christopher Heinecke <christopher@bugwelder.com>",
+    subject: "Achtung überprüfe die Produktpreise!",
+    attachment:
+    [
+      {data:price_changes_csv_file, alternative:false, name:"price_changes.csv"}
+    ]
+  };
+  var server  = email.server.connect(config.gmail);
+  server.send(message, function(err, message) { console.log(err || message); });
 }
 
 function precise_round(num,decimals){
-	return Math.round(num*Math.pow(10,decimals))/Math.pow(10,decimals);
+  return Math.round(num*Math.pow(10,decimals))/Math.pow(10,decimals);
 }
 
 import_heritage_data_in_parts(function() {
-	csv()
-	.from.path(magento_csv_filename, {columns: true})
-	.on('record', function(row,index){
-		magento_skus_set.add(row.sku);
-		var i = get_index_from_heritage_attribute("sku", row.sku);
+  csv()
+  .from.path(magento_csv_filename, {columns: true})
+  .on('record', function(row,index){
+    magento_skus_set.add(row.sku);
+    var i = get_index_from_heritage_attribute("sku", row.sku);
 
-		if(i >= 0) {
-			var sku = row.sku;
-			var _type = "";
-			var _attribute_set = "";
-			var _store = "";
-			var stock_vwheritage_availabilitymessagecode = get_number_or_null(heritage_data["AVAILABILITYMESSAGECODE"][i]);
+    if(i >= 0) {
+      var sku = row.sku;
+      var _type = "";
+      var _attribute_set = "";
+      var _store = "";
+      var stock_vwheritage_availabilitymessagecode = get_number_or_null(heritage_data.AVAILABILITYMESSAGECODE[i]);
 
-			switch (stock_vwheritage_availabilitymessagecode) {
-				case 1: // "Not currently available"
-					stock_vwheritage_availabilitymessagecode = 45;
-				break;
-				case 2: // "Available soon, date to be confirmed"
-					stock_vwheritage_availabilitymessagecode = 46;
-				break;
-				case 3: // "Due in one week"
-					stock_vwheritage_availabilitymessagecode = 47;
-				break;
-				case 4: // "Available in [dueWeeks] weeks"
-					stock_vwheritage_availabilitymessagecode = 48;
-				break;
-				default:
-					console.log("Achtung unbekanter stock_vwheritage_availabilitymessagecode!");
-			}
+      switch (stock_vwheritage_availabilitymessagecode) {
+        case 1: // "Not currently available"
+          stock_vwheritage_availabilitymessagecode = 45;
+        break;
+        case 2: // "Available soon, date to be confirmed"
+          stock_vwheritage_availabilitymessagecode = 46;
+        break;
+        case 3: // "Due in one week"
+          stock_vwheritage_availabilitymessagecode = 47;
+        break;
+        case 4: // "Available in [dueWeeks] weeks"
+          stock_vwheritage_availabilitymessagecode = 48;
+        break;
+        default:
+          console.log("Achtung unbekanter stock_vwheritage_availabilitymessagecode!");
+      }
 
-			var sku_clean = row.sku.replace(/\/|-|\.|\s/g, "");
-			var vwh_id = get_number_or_null(heritage_data["ITEMID"][i]);
-			var stock_vwheritage_dueweeks = get_number_or_null(heritage_data["DUEWEEKS"][i]);
-			var stock_vwheritage_qty = get_number_or_null(heritage_data["FREESTOCKQUANTITY"][i]);
-			var stock_strichweg_qty = get_number_or_null(row.stock_strichweg_qty);
-			var qty = stock_vwheritage_qty + stock_strichweg_qty;
-			var is_in_stock = qty > 0 ? 1 : 0;
-			// var is_in_stock = 1;
-			var vwheritage_price_pound = precise_round( get_price_or_null(heritage_data["COSTPRICE"][i]), 2 );
-			var manufacturer = row.manufacturer;
-			//var special_order = row.special_order;
-			var special_order = (heritage_data["SPECIALORDER"][i] == 'y' || heritage_data["SPECIALORDER"][i] == true )  && stock_strichweg_qty <= 0 ? 1 : 0; // Nur special order wenn keine Produkte auf Lager sind	
-			var new_line = '"'+sku+'","'+sku_clean+'","'+vwh_id+'","'+_type+'","'+_attribute_set+'","'+_store+'","'+stock_vwheritage_availabilitymessagecode+'","'+stock_vwheritage_dueweeks+'","'+stock_vwheritage_qty+'","'+stock_strichweg_qty+'","'+qty+'","'+is_in_stock+'","'+vwheritage_price_pound+'","'+special_order+'"\r\n';
-			stock_csv_file += new_line;
+      var sku_clean = row.sku.replace(/\/|-|\.|\s/g, "");
+      var vwh_id = get_number_or_null(heritage_data.ITEMID[i]);
+      var stock_vwheritage_dueweeks = get_number_or_null(heritage_data.DUEWEEKS[i]);
+      var stock_vwheritage_qty = get_number_or_null(heritage_data.FREESTOCKQUANTITY[i]);
+      var stock_strichweg_qty = get_number_or_null(row.stock_strichweg_qty);
+      var qty = stock_vwheritage_qty + stock_strichweg_qty;
+      var is_in_stock = qty > 0 ? 1 : 0;
+      // var is_in_stock = 1;
+      var vwheritage_price_pound = precise_round( get_price_or_null(heritage_data.COSTPRICE[i]), 2 );
+      var manufacturer = row.manufacturer;
+      //var special_order = row.special_order;
+      var special_order = (heritage_data.SPECIALORDER[i] == 'y' || heritage_data.SPECIALORDER[i] === true ) && stock_strichweg_qty <= 0 ? 1 : 0; // Nur special order wenn keine Produkte auf Lager sind  
+      var new_line = '"'+sku+'","'+sku_clean+'","'+vwh_id+'","'+_type+'","'+_attribute_set+'","'+_store+'","'+stock_vwheritage_availabilitymessagecode+'","'+stock_vwheritage_dueweeks+'","'+stock_vwheritage_qty+'","'+stock_strichweg_qty+'","'+qty+'","'+is_in_stock+'","'+vwheritage_price_pound+'","'+special_order+'"\r\n';
+      stock_csv_file += new_line;
 
-			var new_cost_price = precise_round( vwheritage_price_pound*EURO, 2);
-			var current_cost_price = precise_round( get_price_or_null(row.cost_price), 2 );
-			if(new_cost_price != current_cost_price) {
-				new_line = '"'+sku+'","'+current_cost_price+'","'+new_cost_price+'","'+vwheritage_price_pound+'"';
-				price_changes_csv_file += new_line+"\r\n";
-			}
-		}
-	})
-	.on('end', function(count){
-		console.log('Number of lines: '+count);
-		console.log('Length of price_changes_csv_file: '+price_changes_csv_file.length);
-		if (price_changes_csv_file.length > 50 && !argv.nopricemail) {
-			send_mail_with_price_equality();
-		}
-		save_csv_file(stock_csv_file, result_csv_filename);
-		if (argv.equality)
-			send_mail_with_sku_equality();
-	})
-	.on('error', function(error){
-		console.log(error.message);
-	});
+      var new_cost_price = precise_round( vwheritage_price_pound*EURO, 2);
+      var current_cost_price = precise_round( get_price_or_null(row.cost_price), 2 );
+      if(new_cost_price != current_cost_price) {
+        new_line = '"'+sku+'","'+current_cost_price+'","'+new_cost_price+'","'+vwheritage_price_pound+'"';
+        price_changes_csv_file += new_line+"\r\n";
+      }
+    }
+  })
+  .on('end', function(count){
+    console.log('Number of lines: '+count);
+    console.log('Length of price_changes_csv_file: '+price_changes_csv_file.length);
+    if (price_changes_csv_file.length > 50 && !argv.nopricemail) {
+      send_mail_with_price_equality();
+    }
+    save_csv_file(stock_csv_file, result_csv_filename);
+    if (argv.equality)
+      send_mail_with_sku_equality();
+  })
+  .on('error', function(error){
+    console.log(error.message);
+  });
 });

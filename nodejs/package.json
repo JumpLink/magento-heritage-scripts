@@ -4,14 +4,15 @@
   "version": "0.0.1",
   "author": "Pascal Garber <pascal.garber@gmail.com>",
   "dependencies": {
-    "magento": "git://github.com/JumpLink/node-magento.git",
+    "csv": "*",
+    "emailjs": "*",
+    "fetch": "*",
     "heritage": "git://github.com/JumpLink/node-heritage.git",
     "json-fs": "git://github.com/JumpLink/node-json-fs.git",
-    "fetch": "*",
-    "xmlrpc": "*",
-    "csv": "*",
+    "magento": "git://github.com/JumpLink/node-magento.git",
+    "optimist": "^0.6.1",
     "simplesets": "*",
-    "emailjs": "*"
+    "xmlrpc": "*"
   },
   "repository": "git://github.com/JumpLink/magento-heritage-scripts.git"
 }
