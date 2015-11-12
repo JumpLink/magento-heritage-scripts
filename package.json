@@ -4,8 +4,8 @@
   "version": "0.0.1",
   "author": "Pascal Garber <pascal.garber@gmail.com>",
   "dependencies": {
-    "fetch": "*",
-    "nodemailer": "~0.6.0"
+    "fetch": "^0.3.6",
+    "nodemailer": "^1.3.2"
   },
   "devDependencies": {
     "json-fs": "git://github.com/JumpLink/node-json-fs.git"
