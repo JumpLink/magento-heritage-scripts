@@ -168,7 +168,7 @@ import_heritage_data_in_parts(function() {
           stock_vwheritage_availabilitymessagecode = 48;
         break;
         default:
-          console.log("Achtung unbekanter stock_vwheritage_availabilitymessagecode!");
+          console.log("Achtung unbekanter stock_vwheritage_availabilitymessagecode!", stock_vwheritage_availabilitymessagecode);
       }
 
       var sku_clean = row.sku.replace(/\/|-|\.|\s/g, "");
@@ -182,7 +182,10 @@ import_heritage_data_in_parts(function() {
       var vwheritage_price_pound = precise_round( get_price_or_null(heritage_data.COSTPRICE[i]), 2 );
       var manufacturer = row.manufacturer;
       //var special_order = row.special_order;
-      var special_order = (heritage_data.SPECIALORDER[i] == 'y' || heritage_data.SPECIALORDER[i] === true ) && stock_strichweg_qty <= 0 ? 1 : 0; // Nur special order wenn keine Produkte auf Lager sind  
+      var special_order = (heritage_data.SPECIALORDER[i] == 'y' || heritage_data.SPECIALORDER[i] == true || heritage_data.SPECIALORDER[i] == 'true') && stock_strichweg_qty <= 0 ? 1 : 0; // Nur special order wenn keine Produkte auf Lager sind  
+      if(special_order === 1) {
+        is_in_stock = 1;
+      }
       var new_line = '"'+sku+'","'+sku_clean+'","'+vwh_id+'","'+_type+'","'+_attribute_set+'","'+_store+'","'+stock_vwheritage_availabilitymessagecode+'","'+stock_vwheritage_dueweeks+'","'+stock_vwheritage_qty+'","'+stock_strichweg_qty+'","'+qty+'","'+is_in_stock+'","'+vwheritage_price_pound+'","'+special_order+'"\r\n';
       stock_csv_file += new_line;
 
@@ -192,6 +195,22 @@ import_heritage_data_in_parts(function() {
         new_line = '"'+sku+'","'+current_cost_price+'","'+new_cost_price+'","'+vwheritage_price_pound+'"';
         price_changes_csv_file += new_line+"\r\n";
       }
+	console.log('============================ "'+sku+'" =================================');
+	console.log('sku', sku);
+      	console.log('sku_clean', sku_clean);
+	console.log('vwh_id', vwh_id);
+	console.log('stock_vwheritage_availabilitymessagecode', stock_vwheritage_availabilitymessagecode);
+	console.log('stock_vwheritage_dueweeks', stock_vwheritage_dueweeks);
+	console.log('stock_vwheritage_qty', stock_vwheritage_qty);
+	console.log('stock_strichweg_qty', stock_strichweg_qty);
+	console.log('qty', qty);
+	console.log('is_in_stock', is_in_stock);
+	console.log('vwheritage_price_pound', vwheritage_price_pound);
+	console.log('manufacturer', manufacturer);
+	console.log('special_order', special_order);
+	console.log('vwheritage_special_order', heritage_data.SPECIALORDER[i]);
+	console.log('new_cost_price', new_cost_price);
+	console.log('current_cost_price', current_cost_price);
     }
   })
   .on('end', function(count){
