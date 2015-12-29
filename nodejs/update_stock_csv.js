@@ -183,7 +183,7 @@ import_heritage_data_in_parts(function() {
       var manufacturer = row.manufacturer;
       //var special_order = row.special_order;
       var special_order = (heritage_data.SPECIALORDER[i] == 'y' || heritage_data.SPECIALORDER[i] == true || heritage_data.SPECIALORDER[i] == 'true') && stock_strichweg_qty <= 0 ? 1 : 0; // Nur special order wenn keine Produkte auf Lager sind  
-      if(special_order === 1) {
+      if(special_order == 1) {
         is_in_stock = 1;
       }
       var new_line = '"'+sku+'","'+sku_clean+'","'+vwh_id+'","'+_type+'","'+_attribute_set+'","'+_store+'","'+stock_vwheritage_availabilitymessagecode+'","'+stock_vwheritage_dueweeks+'","'+stock_vwheritage_qty+'","'+stock_strichweg_qty+'","'+qty+'","'+is_in_stock+'","'+vwheritage_price_pound+'","'+special_order+'"\r\n';
