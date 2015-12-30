@@ -6,20 +6,18 @@ var csv = require('csv');
 var sets = require('simplesets'); // sets
 var email   = require("emailjs"); // send emails
 var argv = require('optimist')
-    .usage('Usage: $0 -s [string] -o [string] ')
-    .string('o', 's')
-    .demand(['o','s'])
+    .usage('Usage: $0 -o [string] ')
+    .string('o')
+    .demand(['o'])
     .alias('o', 'output')
-   // .alias('s', 'source')
     .describe('o', 'Outputfilename to save the new csv')
-   // .describe('s', 'Sourcefilename of the exported magento-csv to read the current inventories')
     .argv;
 
 /*
  * magentobug: magento sets all attributes wit a defaultvalue to the defaultvalue: https://plus.google.com/111468575764025343400/posts/BvtYDPyoDw6
  * WORKAROUND for the magentobug: forward the attrbutes e.g. manufacturer
  */
-var stock_price_csv_file = '"SKU";"Stock";"Price"\r\n';
+var stock_price_csv_file = "'SKU';'Stock';'Price'\r\n";
 var heritage_data;
 var heritage_skus_set;
 var magento_skus_set = new sets.Set();
@@ -29,7 +27,7 @@ var EURO = 1.3;
 var result_csv_filename = argv.output;
 
 function save_csv_file(string_to_save, filename) {
-  console.log("save_csv_file", filename);
+  console.log("[save_csv_file]", filename);
   fs.writeFile(filename, string_to_save, function(err) {
     if(err) {
       console.log(err);
@@ -43,7 +41,7 @@ function import_heritage_data_in_parts(cb) {
   heritage.auto.catalog.product.list(function(err, data) {
     if(err) return cb(err);
     if(typeof(data) === 'undefined' || data === null) {
-      console.log("Error: data not set");
+      console.error("Error: data not set");
       return cb("Error: data not set");
     }
     console.log("list.length: "+data.CODE.length);
@@ -82,45 +80,18 @@ function precise_round(num,decimals){
 }
 
 import_heritage_data_in_parts(function(err, heritage_data) {
-  console.log(new_line);
-  for (var i = 0; i < heritage_data.sku.length; i++) {
+  if(err) {
+    console.error("[import_heritage_data_in_parts]", err);
+  }
+  for (var i = 0; i < heritage_data.sku.length-1; i++) {
     var sku = heritage_data.sku[i];
     var stock = get_number_or_null(heritage_data.FREESTOCKQUANTITY[i]);
     var vwheritage_price_pound = precise_round( get_price_or_null(heritage_data.COSTPRICE[i]), 2 );
     var price = precise_round( vwheritage_price_pound*EURO, 2);
     // var price = precise_round( get_price_or_null(row.cost_price), 2 );
-    var new_line = '"'+sku+'";"'+stock+'";"'+price+'"\r\n';
-    console.log(heritage_data);
-    console.log(new_line);
+    var new_line = "'"+sku+"';'"+stock+"';'"+price+"'\r\n";
+    console.log("[import_heritage_data_in_parts] new_line", new_line);
     stock_price_csv_file += new_line;
   }
   save_csv_file(stock_price_csv_file, result_csv_filename);
 });
-
-//import_heritage_data_in_parts(function() {
-//  csv()
-//  .from.path(magento_csv_filename, {columns: true})
-//  .on('record', function(row,index){
-//    magento_skus_set.add(row.sku);
-//    var i = get_index_from_heritage_attribute("sku", row.sku);
-
-//    if(i >= 0) {
-//      var sku = heritage_data.sku[i];
-//      var stock = get_number_or_null(heritage_data.FREESTOCKQUANTITY[i]);
-//      var vwheritage_price_pound = precise_round( get_price_or_null(heritage_data.COSTPRICE[i]), 2 );
-//      var price = precise_round( vwheritage_price_pound*EURO, 2);
-//      // var price = precise_round( get_price_or_null(row.cost_price), 2 );
-//      var new_line = '"'+sku+'";"'+stock+'";"'+price+'"\r\n';
-//      console.log(heritage_data);
-//      console.log(new_line);
-//      stock_price_csv_file += new_line;
-//    }
-//  })
-//  .on('end', function(count){
-//    console.log('Number of lines: '+count);
-//    save_csv_file(stock_csv_file, result_csv_filename);
-//  })
-//  .on('error', function(error){
-//    console.log(error.message);
-//  });
-//});

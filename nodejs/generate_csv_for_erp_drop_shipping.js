@@ -28,6 +28,10 @@ var EURO = 1.3;
 var magento_csv_filename  = argv.source;
 var result_csv_filename = argv.output;
 
+console.log("magento_csv_filename", magento_csv_filename);
+console.log("result_csv_filename", result_csv_filename);
+
+
 function save_csv_file(string_to_save, filename) {
   console.log("save_csv_file", filename);
   fs.writeFile(filename, string_to_save, function(err) {
@@ -97,10 +101,12 @@ function precise_round(num,decimals){
 //   save_csv_file(stock_price_csv_file, result_csv_filename);
 // });
 
-import_heritage_data_in_parts(function() {
+import_heritage_data_in_parts(function(err, heritage_data) {
+  console.log("Start to iterate CSV", heritage_data.length);
   csv()
   .from.path(magento_csv_filename, {columns: true})
   .on('record', function(row,index){
+    console.log('index', index);
     magento_skus_set.add(row.sku);
     var i = get_index_from_heritage_attribute("sku", row.sku);
 
