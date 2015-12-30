@@ -84,7 +84,7 @@ import_heritage_data_in_parts(function(err, heritage_data) {
     console.error("[import_heritage_data_in_parts]", err);
   }
   for (var i = 0; i < heritage_data.sku.length-1; i++) {
-    var sku = heritage_data.sku[i];
+    var sku = heritage_data.sku[i].replace("'","´"); // ' is used to restrict csv columns
     var stock = get_number_or_null(heritage_data.FREESTOCKQUANTITY[i]);
     var vwheritage_price_pound = precise_round( get_price_or_null(heritage_data.COSTPRICE[i]), 2 );
     var price = precise_round( vwheritage_price_pound*EURO, 2);
